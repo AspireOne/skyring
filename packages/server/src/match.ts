@@ -1,0 +1,195 @@
+import {
+  clampInputCommand,
+  createInitialMatchState,
+  MATCH_PHASE,
+  type GameConfig,
+  type InputCommand,
+  type MatchResult,
+  type MatchState,
+  type PlayerScores,
+  type PlayerSlot,
+} from '@skyring/shared';
+
+import { type Now, TickScheduler } from './scheduler.js';
+
+import type { Connection } from './connection.js';
+import type { MatchEndReason } from '@skyring/shared';
+
+export interface MatchDeps {
+  readonly now: Now;
+  /** Called once the match has fully ended so the owner can drop references. */
+  readonly onEnded: (match: Match) => void;
+}
+
+interface PlayerRuntime {
+  readonly slot: PlayerSlot;
+  readonly connection: Connection;
+  /** Most recent valid input, reused when a tick has no fresh command. */
+  lastInput: InputCommand | undefined;
+  lastReceivedSeq: number;
+  lastProcessedSeq: number;
+}
+
+/**
+ * A single self-contained 1v1 match: two connections, one authoritative
+ * {@link MatchState}, and a fixed-tick loop (IMPLEMENTATION §7.3). Progression
+ * (`step`) is separated from scheduling so tests can run a whole match with
+ * controlled time (TESTING §2).
+ */
+export class Match {
+  readonly state: MatchState;
+  private readonly players: Record<PlayerSlot, PlayerRuntime>;
+  private readonly scheduler: TickScheduler;
+  private readonly snapshotInterval: number;
+  private ended = false;
+
+  constructor(
+    readonly id: string,
+    readonly config: GameConfig,
+    readonly seed: number,
+    connectionA: Connection,
+    connectionB: Connection,
+    private readonly deps: MatchDeps,
+  ) {
+    this.state = createInitialMatchState(config);
+    this.players = {
+      a: makePlayer('a', connectionA),
+      b: makePlayer('b', connectionB),
+    };
+    this.snapshotInterval = config.SIM_HZ / config.SNAPSHOT_HZ;
+    this.scheduler = new TickScheduler(
+      config.SIM_HZ,
+      () => this.step(),
+      deps.now,
+    );
+  }
+
+  /** Announce the pairing and begin ticking (production entry point). */
+  start(): void {
+    for (const { slot, connection } of Object.values(this.players)) {
+      connection.send({
+        t: 'matchFound',
+        matchId: this.id,
+        yourSlot: slot,
+        constants: this.config,
+      });
+    }
+    this.broadcastSnapshot();
+    this.scheduler.start();
+  }
+
+  /** Advance exactly one authoritative simulation tick. */
+  step(): void {
+    if (this.ended) {
+      return;
+    }
+
+    // Drain the latest intent per player; the sim itself lands in Milestone 3.
+    for (const player of Object.values(this.players)) {
+      if (player.lastInput !== undefined) {
+        player.lastProcessedSeq = player.lastInput.seq;
+      }
+    }
+
+    this.state.tick += 1;
+
+    if (this.state.tick % this.snapshotInterval === 0) {
+      this.broadcastSnapshot();
+    }
+  }
+
+  receiveInput(connection: Connection, input: InputCommand): void {
+    const player = this.playerFor(connection);
+    if (player === undefined || input.seq <= player.lastReceivedSeq) {
+      return; // stale/duplicate or not a participant
+    }
+    player.lastReceivedSeq = input.seq;
+    player.lastInput = clampInputCommand(input);
+  }
+
+  /** A participant's socket closed or they voluntarily left (GAME.md §9). */
+  handleDisconnect(connection: Connection): void {
+    if (this.ended || this.playerFor(connection) === undefined) {
+      return;
+    }
+    const survivor = this.opponentOf(connection);
+    const duringPlay =
+      this.state.phase === MATCH_PHASE.Playing ||
+      this.state.phase === MATCH_PHASE.SuddenDeath;
+
+    this.finish((player) => ({
+      reason: 'opponentLeft',
+      result: player === survivor && duringPlay ? 'win' : 'draw',
+      notify: player === survivor,
+    }));
+  }
+
+  /** Halt without notifying clients (server shutdown). */
+  stop(): void {
+    this.ended = true;
+    this.scheduler.stop();
+  }
+
+  private finish(
+    outcome: (player: PlayerRuntime) => {
+      reason: MatchEndReason;
+      result: MatchResult;
+      notify: boolean;
+    },
+  ): void {
+    this.ended = true;
+    this.state.phase = MATCH_PHASE.Ended;
+    this.scheduler.stop();
+
+    for (const player of Object.values(this.players)) {
+      const { reason, result, notify } = outcome(player);
+      if (notify) {
+        player.connection.send({
+          t: 'matchEnd',
+          result,
+          reason,
+          scores: this.scores(),
+        });
+      }
+    }
+
+    this.deps.onEnded(this);
+  }
+
+  private broadcastSnapshot(): void {
+    const serverTime = this.deps.now();
+    for (const player of Object.values(this.players)) {
+      player.connection.send({
+        t: 'snapshot',
+        tick: this.state.tick,
+        serverTime,
+        ackSeq: player.lastProcessedSeq,
+        state: this.state,
+      });
+    }
+  }
+
+  private scores(): PlayerScores {
+    return { a: this.state.scores.a, b: this.state.scores.b };
+  }
+
+  private playerFor(connection: Connection): PlayerRuntime | undefined {
+    return Object.values(this.players).find(
+      (player) => player.connection === connection,
+    );
+  }
+
+  private opponentOf(connection: Connection): PlayerRuntime {
+    return this.players[this.players.a.connection === connection ? 'b' : 'a'];
+  }
+}
+
+function makePlayer(slot: PlayerSlot, connection: Connection): PlayerRuntime {
+  return {
+    slot,
+    connection,
+    lastInput: undefined,
+    lastReceivedSeq: -1,
+    lastProcessedSeq: -1,
+  };
+}

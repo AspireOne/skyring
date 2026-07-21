@@ -2,7 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
-    "types": ["node", "vitest/importMeta"],
+    "types": ["node", "vitest/importMeta", "vite/client"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
@@ -12,6 +12,7 @@
   },
   "include": [
     "packages/**/*.test.ts",
+    "packages/client/src/vite-env.d.ts",
     "tests/**/*.test.ts",
     "tests/**/*.spec.ts"
   ]

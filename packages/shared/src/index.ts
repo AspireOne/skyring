@@ -17,3 +17,53 @@ export {
   type RingState,
   type Vec3,
 } from './types.js';
+export {
+  LOCAL_NOSE,
+  WORLD_UP,
+  fromQuaternion,
+  fromVector3,
+  noseDirection,
+  orientationFacing,
+  toQuaternion,
+  toVector3,
+} from './math.js';
+export { createRng, type Rng } from './rng.js';
+export {
+  clampInputCommand,
+  encode,
+  normalizeRoomCode,
+  parseClientMessage,
+  parseServerMessage,
+  PROTOCOL_VERSION,
+} from './protocol.js';
+export type {
+  BounceEvent,
+  BounceSurface,
+  ClientMessage,
+  ClientMessageTag,
+  EventMessage,
+  GameEvent,
+  GameEventKind,
+  HelloMessage,
+  HitEvent,
+  InputMessage,
+  LeaveMessage,
+  MatchEndMessage,
+  MatchEndReason,
+  MatchFoundMessage,
+  MatchResult,
+  PhaseChangeEvent,
+  PingMessage,
+  PongMessage,
+  QueueMessage,
+  QueueMode,
+  QueuedMessage,
+  RejectedMessage,
+  RingTeleportEvent,
+  ServerMessage,
+  ServerMessageTag,
+  SnapshotMessage,
+  StumbleEvent,
+  WelcomeMessage,
+} from './messages.js';
+export { createInitialMatchState } from './sim/state.js';

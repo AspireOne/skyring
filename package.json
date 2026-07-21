@@ -21,7 +21,7 @@
     "start": "pnpm --filter @skyring/server start",
     "test": "vitest run packages",
     "test:coverage": "vitest run packages tests/integration --coverage",
-    "test:e2e": "pnpm build && playwright test",
+    "test:e2e": "VITE_SERVER_URL=ws://127.0.0.1:4174 pnpm build && playwright test",
     "test:integration": "vitest run tests/integration",
     "test:soak": "vitest run tests/soak --passWithNoTests",
     "test:watch": "vitest packages",

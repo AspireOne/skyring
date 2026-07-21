@@ -35,6 +35,10 @@ describe('game config', () => {
       { BOUNDARY_RESTITUTION: -0.1 },
       'BOUNDARY_RESTITUTION must be in the range (0, 1].',
     ],
+    [
+      { SPAWN_SEPARATION: 5000 },
+      'Spawn points must sit safely inside the dome.',
+    ],
   ])('rejects an invalid override', (override, message) => {
     expect(() => createGameConfig(override)).toThrow(message);
   });

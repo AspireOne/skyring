@@ -5,15 +5,17 @@ milestone, verification result, decision, known issue, or next action changes.
 
 ## Current position
 
-- **Active milestone:** Milestone 2 — connect, handshake, clock sync, and matchmaking.
-- **Current objective:** replace the foundation-only WebSocket host with the versioned
-  protocol, connection lifecycle, quick queue, and room-code pairing.
+- **Active milestone:** Milestone 3 — authoritative flight, boundaries, and remote
+  interpolation.
+- **Current objective:** implement `stepPlane` + arena boundaries in `shared`; server
+  simulates both planes from real input; client renders the local plane from snapshots
+  (no prediction yet) and the remote plane interpolated.
 - **Governing decisions:** `DECISIONS.md` D001–D011.
 
 ## Milestones
 
 - [x] 1. Monorepo skeleton and verification toolchain
-- [ ] 2. Connect, handshake, clock sync, and matchmaking
+- [x] 2. Connect, handshake, clock sync, and matchmaking
 - [ ] 3. Authoritative flight, boundaries, and remote interpolation
 - [ ] 4. Ring, scoring, HUD, and match lifecycle
 - [ ] 5. Gun, knockback, stumble, prediction, and reconciliation
@@ -35,25 +37,57 @@ milestone, verification result, decision, known issue, or next action changes.
 
 ## Latest verification
 
-Foundation verified on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
+Milestone 2 verified on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
 
-- `pnpm verify` — passed: project-reference and test TypeScript checks, ESLint, Knip,
-  unit tests, and the production client/server/shared build.
-- `pnpm test:integration` — passed against a real ephemeral HTTP/WebSocket server.
-- `pnpm test:e2e` — passed in Playwright Chromium: production client WebGL frame,
-  shared config import, and server health.
-- `pnpm test:coverage` — passed with 20 tests; current measured foundation coverage is
-  85.86% statements, 85.93% branches, and 94.44% functions.
-- `pnpm format:check` — passed.
+- `pnpm verify` — passed: typecheck (project refs + tests), ESLint, Knip, 73 unit tests,
+  production build.
+- `pnpm test:integration` — passed (12 tests): real ephemeral HTTP/WebSocket server
+  covering handshake/welcome, version rejection, ping/pong, quick-queue and room-code
+  pairing with isolation, snapshot streaming, and disconnect teardown/cleanup.
+- `pnpm test:e2e` — passed in Playwright Chromium: production client renders WebGL,
+  connects to the real server, and reaches the `queued` matchmaking state with no
+  console errors.
+
+### What Milestone 2 added
+
+- **shared:** `protocol.ts` (versioned JSON codec + boundary validation + input
+  clamping), `messages.ts` (full C→S / S→C catalog and gameplay-event union), `rng.ts`
+  (seeded mulberry32), `math.ts` (Y-up conventions; nose = local **-Z**), and
+  `sim/state.ts` (`createInitialMatchState`). Added `SPAWN_SEPARATION` tunable.
+- **server:** `Connection` (transport + boundary parse), `TickScheduler`
+  (drift-corrected fixed clock with catch-up clamp), `Match` (per-match tick loop,
+  input buffering + ack, snapshot cadence, disconnect lifecycle), `Matchmaker` (quick
+  queue + room codes), and a rewired `server.ts` with hello/ping routing and test seams
+  (`config`/`now`/`nextSeed` injection, `stats()`).
+- **client:** `net/clock-sync.ts` (NTP-lite), `net/net-client.ts` (socket lifecycle,
+  handshake, queueing, clock sync, snapshot capture — fully injectable for tests),
+  `config.ts` (server URL + room from query), and a `main.ts` that connects and shows
+  matchmaking status while keeping the cube smoke scene.
+
+### Notes / deviations
+
+- The `Match.step()` loop currently only advances `tick` and broadcasts snapshots; the
+  authoritative `stepMatch` (flight/ring/gun/lifecycle) lands across Milestones 3–5. The
+  input buffer and `ackSeq` plumbing already exist so those milestones slot in cleanly.
+- Client clock-sync cadence constants are local to `net-client.ts` (they never cross the
+  wire or affect authority), rather than in the shared match config.
+- `SPAWN_SEPARATION` (250) was added to `constants.ts` so spawn geometry is a tunable,
+  not a magic number.
 
 ## Known issues / limitations
 
-- Gameplay simulation, protocol handshake, matchmaking, and client networking are not
-  part of the foundation milestone; they begin in Milestone 2.
+- No authoritative physics yet: planes sit at their spawn transforms and the ring/score
+  do not change. Flight begins in Milestone 3.
+- No client-side prediction yet (deferred to Milestone 5); Milestone 3 renders the local
+  plane straight from snapshots and accepts input lag by design.
 - Production assets are intentionally deferred until the renderer has a stable transform
   boundary in Milestone 6.
 
 ## Next action
 
-Implement the shared protocol tags/types/validation and version handshake, then extend
-the real-WebSocket integration suite before adding matchmaking.
+Milestone 3: implement `sim/plane.ts` (`stepPlane`: throttle, control torque, velocity
+alignment, integration) and `sim/collision.ts` boundaries (dome + ground bounce), compose
+them in a `stepMatch` invoked by `Match.step()`, feed real client input into the sim, and
+build the client render loop (chase camera, local plane from snapshots, remote plane
+interpolated). Add flight/boundary invariant tests, interpolation tests, and a two-browser
+flight smoke journey.

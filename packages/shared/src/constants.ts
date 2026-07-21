@@ -6,6 +6,7 @@ export interface GameConfig {
   readonly GROUND_Y: number;
   readonly BOUNDARY_RESTITUTION: number;
   readonly SPAWN_ALTITUDE: number;
+  readonly SPAWN_SEPARATION: number;
   readonly MIN_SPEED: number;
   readonly MAX_SPEED: number;
   readonly THROTTLE_ACCEL: number;
@@ -46,6 +47,7 @@ export const DEFAULT_GAME_CONFIG: Readonly<GameConfig> = Object.freeze({
   GROUND_Y: 0,
   BOUNDARY_RESTITUTION: 0.8,
   SPAWN_ALTITUDE: 150,
+  SPAWN_SEPARATION: 250,
   MIN_SPEED: 40,
   MAX_SPEED: 140,
   THROTTLE_ACCEL: 60,
@@ -86,6 +88,7 @@ const POSITIVE_KEYS = [
   'INTERP_DELAY_MS',
   'DOME_RADIUS',
   'SPAWN_ALTITUDE',
+  'SPAWN_SEPARATION',
   'MIN_SPEED',
   'MAX_SPEED',
   'THROTTLE_ACCEL',
@@ -195,6 +198,14 @@ function validateGameConfig(config: GameConfig): void {
     throw new RangeError(
       'SPAWN_ALTITUDE must be safely inside the playable dome.',
     );
+  }
+
+  const spawnRadius = Math.hypot(
+    config.SPAWN_SEPARATION,
+    config.SPAWN_ALTITUDE,
+  );
+  if (spawnRadius >= config.DOME_RADIUS - config.PLANE_COLLISION_RADIUS) {
+    throw new RangeError('Spawn points must sit safely inside the dome.');
   }
 }
 

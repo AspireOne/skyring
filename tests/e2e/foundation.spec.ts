@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('production client renders WebGL and the server is healthy', async ({
+test('production client renders WebGL, connects, and enters matchmaking', async ({
   page,
   request,
 }) => {
@@ -26,8 +26,12 @@ test('production client renders WebGL and the server is healthy', async ({
   await expect(app).toHaveAttribute('data-render-status', 'ready');
   await expect(app).toHaveAttribute('data-sim-hz', '60');
   await expect(canvas).toBeVisible();
-  expect(
-    await canvas.evaluate((element) => element instanceof HTMLCanvasElement),
-  ).toBe(true);
+
+  // A single client quick-queues and waits for an opponent — proving the full
+  // handshake → welcome → queue path over a real socket.
+  await expect(app).toHaveAttribute('data-net-phase', 'queued');
+  await expect(page.locator('[data-testid="net-status"]')).toContainText(
+    'Waiting for an opponent',
+  );
   expect(browserErrors).toEqual([]);
 });
