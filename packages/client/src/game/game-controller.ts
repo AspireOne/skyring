@@ -5,7 +5,11 @@ import {
 } from '@skyring/shared';
 
 import { queueRequestFromLocation, serverWsUrl } from '../config.js';
-import { projectHud, ringStatus } from '../hud/hud-model.js';
+import {
+  projectHud,
+  projectMatchResult,
+  ringStatus,
+} from '../hud/hud-model.js';
 import { Hud } from '../hud/hud.js';
 import { CONTROL_HINTS, KeyboardInput } from '../input/keyboard.js';
 import { NetClient } from '../net/net-client.js';
@@ -67,7 +71,13 @@ export class GameController {
         this.eventCounts[event.kind] += 1;
       }
     };
-    this.net.onMatchEnd = (message) => this.hud.showResult(message);
+    this.net.onMatchEnd = (message) => {
+      if (this.net.slot) {
+        this.hud.showResult(
+          projectMatchResult(message, this.net.slot, this.config),
+        );
+      }
+    };
   }
 
   start(): void {

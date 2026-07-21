@@ -14,7 +14,7 @@ Severities use:
 
 ## B001 — Displayed scores can contradict the match result
 
-- **Status:** confirmed by static runtime trace
+- **Status:** fixed and verified
 - **Severity:** medium
 - **Location:** `packages/shared/src/sim/ring.ts` (`resolveScoring`),
   `packages/shared/src/sim/match.ts` (sudden-death termination),
@@ -37,6 +37,12 @@ Severities use:
   differences down to the smallest configured scoring tick, and show the formatted
   final score on the result overlay. Keep the authoritative continuous scoring and
   sudden-death ordering unchanged.
+- **Resolution:** the HUD now formats live and final authoritative scores with enough
+  decimal places to expose one configured scoring tick. Match results are projected from
+  `matchEnd.scores` into each player's perspective and render the final score beneath the
+  outcome. Covered by HUD projection regressions and the regulation/sudden-death browser
+  journeys. Verification passed with `pnpm verify` and
+  `pnpm build:e2e && pnpm exec playwright test tests/e2e/lifecycle.spec.ts` (3/3).
 
 ## B002 — The client does not consistently apply the authoritative match config
 

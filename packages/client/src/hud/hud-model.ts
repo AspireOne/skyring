@@ -1,6 +1,8 @@
 import {
   MATCH_PHASE,
   type GameConfig,
+  type MatchEndMessage,
+  type MatchResult,
   type MatchState,
   type PlayerSlot,
   type Vec3,
@@ -9,8 +11,8 @@ import {
 export type RingStatus = 'idle' | 'mine' | 'theirs' | 'contested';
 
 export interface HudModel {
-  myScore: number;
-  theirScore: number;
+  myScore: string;
+  theirScore: string;
   timeLabel: string;
   phaseLabel: string;
   ringStatus: RingStatus;
@@ -21,6 +23,13 @@ export interface HudModel {
   ammo: number;
   ammoMax: number;
   ammoFraction: number;
+}
+
+export interface MatchResultModel {
+  outcome: MatchResult;
+  label: string;
+  myScore: string;
+  theirScore: string;
 }
 
 /**
@@ -41,8 +50,8 @@ export function projectHud(
       : null;
 
   return {
-    myScore: Math.floor(state.scores[localSlot]),
-    theirScore: Math.floor(state.scores[other]),
+    myScore: formatScore(state.scores[localSlot], config),
+    theirScore: formatScore(state.scores[other], config),
     timeLabel: timeLabel(state, config),
     phaseLabel: state.phase,
     ringStatus: ringStatus(state, localSlot),
@@ -57,6 +66,36 @@ export function projectHud(
       Math.min(1, state.planes[localSlot].ammo / config.AMMO_MAX),
     ),
   };
+}
+
+/**
+ * Projects the authoritative final scores into the recipient's perspective.
+ * The result message is used rather than the last snapshot so the overlay is
+ * correct even when delivery ordering or rendering skips the final frame.
+ */
+export function projectMatchResult(
+  message: MatchEndMessage,
+  localSlot: PlayerSlot,
+  config: GameConfig,
+): MatchResultModel {
+  const other: PlayerSlot = localSlot === 'a' ? 'b' : 'a';
+  return {
+    outcome: message.result,
+    label: RESULT_LABEL[message.result],
+    myScore: formatScore(message.scores[localSlot], config),
+    theirScore: formatScore(message.scores[other], config),
+  };
+}
+
+/**
+ * Uses enough decimal places to expose one configured scoring tick. Scores
+ * therefore cannot appear tied when the authoritative result has a one-tick
+ * lead, including the first scoring tick of sudden death.
+ */
+export function formatScore(score: number, config: GameConfig): string {
+  const pointsPerTick = config.RING_POINTS_PER_SEC / config.SIM_HZ;
+  const fractionDigits = Math.max(0, Math.ceil(-Math.log10(pointsPerTick)));
+  return score.toFixed(fractionDigits);
 }
 
 export function ringStatus(
@@ -88,3 +127,9 @@ export function formatClock(ticksRemaining: number, simHz: number): string {
   const rest = seconds % 60;
   return `${minutes}:${rest.toString().padStart(2, '0')}`;
 }
+
+const RESULT_LABEL: Record<MatchResult, string> = {
+  win: 'YOU WIN',
+  lose: 'YOU LOSE',
+  draw: 'DRAW',
+};

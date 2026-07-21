@@ -168,12 +168,20 @@ canvas {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 72px;
   font-weight: 800;
   letter-spacing: 0.08em;
   background: rgba(4, 9, 18, 0.72);
+}
+
+.hud__result-score {
+  margin-top: 16px;
+  font-size: 32px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
 }
 
 .hud__result[hidden] {
@@ -237,6 +245,10 @@ canvas {
     padding: 20px;
     font-size: clamp(42px, 14vw, 64px);
     text-align: center;
+  }
+
+  .hud__result-score {
+    font-size: 26px;
   }
 
   .net-status {

@@ -1,5 +1,4 @@
-import type { HudModel, RingStatus } from './hud-model.js';
-import type { MatchEndMessage } from '@skyring/shared';
+import type { HudModel, MatchResultModel, RingStatus } from './hud-model.js';
 
 /**
  * DOM overlay for the always-on match state (GAME.md §3, §11): scores, clock,
@@ -87,10 +86,18 @@ export class Hud {
     this.ammo.setAttribute('aria-valuemax', String(model.ammoMax));
   }
 
-  showResult(message: MatchEndMessage): void {
+  showResult(model: MatchResultModel): void {
+    const title = el('div', 'hud__result-title');
+    title.dataset.testid = 'hud-result-title';
+    title.textContent = model.label;
+
+    const score = el('div', 'hud__result-score');
+    score.dataset.testid = 'hud-result-score';
+    score.textContent = `${model.myScore} – ${model.theirScore}`;
+
     this.result.hidden = false;
-    this.result.dataset.outcome = message.result;
-    this.result.textContent = RESULT_LABEL[message.result];
+    this.result.dataset.outcome = model.outcome;
+    this.result.replaceChildren(title, score);
   }
 
   dispose(): void {
@@ -104,12 +111,6 @@ const RING_LABEL: Record<RingStatus, string> = {
   theirs: 'They score',
   contested: 'Contested',
 };
-
-const RESULT_LABEL = {
-  win: 'YOU WIN',
-  lose: 'YOU LOSE',
-  draw: 'DRAW',
-} as const;
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,

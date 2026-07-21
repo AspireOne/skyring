@@ -15,9 +15,17 @@ test('short regulation produces one winner and one loser', async ({
 
   await Promise.all(results.map((result) => expect(result).toBeVisible()));
   const labels = await Promise.all(
-    results.map((result) => result.textContent()),
+    pair.pages.map((page) =>
+      page.locator('[data-testid="hud-result-title"]').textContent(),
+    ),
   );
   expect(labels.sort()).toEqual(['YOU LOSE', 'YOU WIN']);
+  const scores = await Promise.all(
+    pair.pages.map((page) =>
+      page.locator('[data-testid="hud-result-score"]').textContent(),
+    ),
+  );
+  expect(scores.sort()).toEqual(['1.00 – 5.00', '5.00 – 1.00']);
   await Promise.all(
     pair.pages.map((page) =>
       expect(page.locator('#app')).toHaveAttribute('data-net-phase', 'ended'),
@@ -52,9 +60,17 @@ test('a regulation tie visibly enters sudden death and ends on its first score',
     results.map((result) => expect(result).toBeVisible({ timeout: 8000 })),
   );
   const labels = await Promise.all(
-    results.map((result) => result.textContent()),
+    pair.pages.map((page) =>
+      page.locator('[data-testid="hud-result-title"]').textContent(),
+    ),
   );
   expect(labels.sort()).toEqual(['YOU LOSE', 'YOU WIN']);
+  const scores = await Promise.all(
+    pair.pages.map((page) =>
+      page.locator('[data-testid="hud-result-score"]').textContent(),
+    ),
+  );
+  expect(scores.sort()).toEqual(['3.00 – 3.02', '3.02 – 3.00']);
   expectBrowserEvidenceClean(pair.evidence);
   await pair.close();
 });
@@ -74,9 +90,9 @@ test('a live browser disconnect awards the remaining player', async ({
   );
 
   await pair.contexts[1].close();
-  await expect(pair.pages[0].locator('[data-testid="hud-result"]')).toHaveText(
-    'YOU WIN',
-  );
+  await expect(
+    pair.pages[0].locator('[data-testid="hud-result-title"]'),
+  ).toHaveText('YOU WIN');
   await expect(pair.pages[0].locator('#app')).toHaveAttribute(
     'data-net-phase',
     'ended',
