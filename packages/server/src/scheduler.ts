@@ -4,7 +4,7 @@ export type Now = () => number;
 const MAX_CATCHUP_STEPS = 5;
 
 /**
- * Drift-corrected fixed-rate driver (IMPLEMENTATION §4.2, §4.3). It computes
+ * Drift-corrected fixed-rate driver (ARCHITECTURE §3.3). It computes
  * the next tick deadline from a fixed step and catches up (bounded) when the
  * event loop runs late, so simulation time tracks wall-clock without spiralling.
  *

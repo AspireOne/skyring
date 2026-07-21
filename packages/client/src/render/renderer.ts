@@ -57,7 +57,7 @@ const CAM_SMOOTH = 0.12;
 /**
  * Owns the three.js scene and a chase camera behind the local plane. It reads a
  * {@link RenderView} and applies transforms; it holds zero game logic
- * (IMPLEMENTATION §8.3). Aircraft are normalized presentation shells over the
+ * (ARCHITECTURE §5). Aircraft are normalized presentation shells over the
  * authoritative transforms; their source geometry never affects simulation.
  */
 export class Renderer {
@@ -357,7 +357,7 @@ export class Renderer {
     marker: Mesh;
   } {
     const group = new Group();
-    // Unit sphere scaled by radius each frame — clearly a 3D volume (D009).
+    // Unit sphere scaled by radius each frame — clearly a 3D volume (GAME §6).
     const fill = new Mesh(
       new SphereGeometry(1, 24, 16),
       new MeshBasicMaterial({

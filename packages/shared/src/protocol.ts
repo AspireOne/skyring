@@ -7,12 +7,12 @@ import {
 import type { InputCommand } from './types.js';
 
 /**
- * Single seam between in-memory messages and the wire (IMPLEMENTATION §5.4).
+ * Single seam between in-memory messages and the wire (ARCHITECTURE §4).
  * JSON today; swapping to a binary encoder means touching only this file.
  *
  * The server trusts *nothing* from a client, so {@link parseClientMessage}
- * fully validates structure and finiteness at the boundary (IMPLEMENTATION
- * §7.4, TESTING §7). The client is more trusting of the server it chose to
+ * fully validates structure and finiteness at the boundary (ARCHITECTURE §4,
+ * TESTING §7). The client is more trusting of the server it chose to
  * connect to, but still guards against malformed frames.
  */
 export const PROTOCOL_VERSION = 1;
@@ -132,7 +132,7 @@ function clampAxis(value: number): number {
 }
 
 /**
- * Clamp a validated input's control axes into `[-1, 1]` (IMPLEMENTATION §7.4).
+ * Clamp a validated input's control axes into `[-1, 1]` (ARCHITECTURE §4).
  * Parsing already guaranteed finiteness; this bounds magnitude so a client can
  * never request super-normal control authority.
  */

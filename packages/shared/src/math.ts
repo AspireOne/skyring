@@ -5,7 +5,7 @@ import type { Quat, Vec3 } from './types.js';
 /**
  * Shared math conventions. World is **Y-up, right-handed** (three.js default).
  *
- * NOSE CONVENTION (documented once, per IMPLEMENTATION §6): a plane's nose
+ * NOSE CONVENTION (documented once, per ARCHITECTURE §3.1): a plane's nose
  * points along its local **-Z** axis — three.js "forward". Every muzzle,
  * thrust, and alignment calculation derives its world forward vector by
  * rotating {@link LOCAL_NOSE} by the plane's orientation quaternion.

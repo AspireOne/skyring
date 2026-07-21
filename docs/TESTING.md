@@ -1,13 +1,12 @@
 # ✅ SkyRing — Verification Strategy
 
-> **Purpose:** define how SkyRing earns confidence at every milestone, from a pure
+> **Purpose:** define how SkyRing earns confidence at every layer, from a pure
 > simulation rule to a complete two-browser match.
 >
-> **Companion docs:** [`GAME.md`](./GAME.md) defines intended game behavior,
-> [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) defines the architecture, and
-> [`DECISIONS.md`](./DECISIONS.md) records settled choices. This document defines
-> verification. It does not override those sources: when behavior changes, update the
-> governing document first and then update the affected tests.
+> **Companion docs:** [`GAME.md`](./GAME.md) defines intended game behavior and
+> [`ARCHITECTURE.md`](./ARCHITECTURE.md) defines the technical invariants. This document
+> defines verification. It does not override those sources: when behavior changes,
+> update the governing document first and then update the affected tests.
 
 ---
 
@@ -56,7 +55,7 @@ Production code MUST provide these seams without weakening server authority:
 - Seed, effective config, initial state, and per-player input history are enough to
   replay an authoritative simulation failure.
 - Client networking, interpolation, prediction, rendering, HUD, and input remain
-  separated as described in `IMPLEMENTATION.md`. WebGL is not required to test netcode
+  separated as described in `ARCHITECTURE.md`. WebGL is not required to test netcode
   or game-state projection.
 - Browser scenarios use an explicitly enabled test build/server fixture. Any diagnostic
   hook is read-only on the client; authoritative scenario setup lives on the test server
@@ -90,8 +89,8 @@ tests. IDs use the governing document and section, followed by a short behavior 
 
 One test can satisfy multiple requirements, and one requirement can need evidence at
 multiple layers. When a rule changes, its requirement ID makes the affected tests easy
-to locate. New `GAME.md` edge cases MUST gain matrix entries before their milestone is
-complete.
+to locate. New `GAME.md` edge cases MUST gain matrix entries before their behavior is
+considered verified.
 
 ---
 
@@ -106,12 +105,12 @@ complete.
   and WebKit are compatibility lanes after the core Chromium flow is stable.
 - **V8 coverage through Vitest**: identifies unexercised rule branches. Coverage MUST
   not be inflated with tests that merely execute code without checking behavior.
-- **Seeded scenario runner**: initially a small in-repository utility. Add a property
-  testing dependency only if automatic shrinking provides enough value to justify it.
+- **Seeded scenario runner**: in-repository RNG and builders reproduce failures without
+  another property-testing dependency.
 - **Network fault harness**: a transport wrapper or local proxy that can add latency,
   jitter, pauses, and disconnects without changing simulation behavior.
 
-### 4.2 Suggested layout
+### 4.2 Layout
 
 ```text
 packages/
@@ -252,7 +251,7 @@ Keep these modules testable without creating a WebGL renderer:
 - **Clock sync:** offset selection and RTT calculations work with controlled samples and
   never move displayed match time backward unexpectedly.
 - **Buffers:** input, snapshot, event-deduplication, and projectile buffers are bounded.
-- **Input:** keyboard/gamepad state maps to clamped commands, blur releases held input,
+- **Input:** keyboard state maps to clamped commands, blur releases held input,
   and stumbling/server phase prevents prohibited intent.
 - **HUD projection:** scores, timer, ammo, warning, contested/scoring state, sudden death,
   and results derive from authoritative state.
@@ -266,29 +265,26 @@ Keep these modules testable without creating a WebGL renderer:
 Playwright launches the production-built client and a real server. Each player uses a
 separate browser context so storage, connection, input, and lifecycle are independent.
 
-The core journeys are:
+The implemented journeys are:
 
-1. Two players handshake, quick-queue, receive opposite slots, count down, and enter a
-   match with score, timer, ammo, and ring visible.
-2. A room-code pair connects while unrelated room/queue clients remain isolated.
-3. Each player can steer and fire only their plane; both clients converge on the same
-   authoritative score and phase.
-4. A deterministic short scenario demonstrates firing, recoil, hit, stumble, ammo
-   depletion/regeneration, scoring, warning, and ring teleport.
-5. Regulation produces win/lose results, while a tied scenario enters sudden death and
-   ends on its first valid scoring tick.
-6. Disconnecting one browser produces the defined result for the survivor and removes
-   the match from the server.
-7. Models, audio, and other production assets load; no page error, unhandled rejection,
-   severe console error, or failed required request occurs.
-8. The HUD and essential controls remain usable at supported viewport sizes.
+1. A production-built client renders WebGL, loads every required asset, connects, and
+   enters an isolated room queue.
+2. Two room-code clients receive opposite slots, enter play, and prove local steering.
+3. A deterministic combat pair demonstrates projectiles, ammo spend/regeneration, hits,
+   and stumble feedback.
+4. Short authoritative scenarios cover regulation results, tie-to-sudden-death, and live
+   disconnect results.
+5. A deterministic ring scenario covers warning and teleport feedback.
+6. Compact and desktop contexts keep the essential HUD and controls within the viewport.
 
 Tests wait on state/UI conditions, never arbitrary delays. The test server uses a known
 seed and validated config overrides to keep journeys short. It may start prescribed
 authoritative scenarios, but clients never receive a mutation backdoor.
 
-On failure, retain the Playwright trace, screenshot, browser console, network summary,
-server log, seed, and scenario name.
+Functional journeys retain Playwright trace, screenshot, and video evidence on failure.
+Every journey asserts captured browser/page errors and failed required requests; assertion
+output identifies any captured failure. Performance runs omit heavy artifacts so their
+measurements remain representative.
 
 Pixel snapshots are reserved for stable HUD/layout surfaces. WebGL screenshots are
 diagnostic because GPU/driver differences make exact whole-scene comparisons brittle.
@@ -297,7 +293,7 @@ diagnostic because GPU/driver differences make exact whole-scene comparisons bri
 
 ## 10. Network Adversity, Soak, and Performance
 
-Before shipping a milestone that changes networking or simulation timing, exercise a
+Before shipping a change to networking or simulation timing, exercise a
 matrix including normal local conditions, representative internet latency, jitter,
 short stalls, snapshot pauses, and abrupt disconnects. Validate behavior rather than a
 specific packet schedule:
@@ -324,7 +320,7 @@ hard budgets before there is a representative build to measure.
 ## 11. Human Playtest Protocol
 
 Automation answers "is it correct?" Human playtests answer "does it communicate and
-feel right?" Each major playable milestone has a short structured session:
+feel right?" Each major playable change has a short structured session:
 
 - Can a new player steer, find the ring, understand scoring, and fire without coaching?
 - Does a clean hit create a meaningful scoring opportunity without removing agency?
@@ -345,7 +341,7 @@ code change. If the intended rule changes, update `GAME.md` before changing its 
 
 ## 12. Commands and Verification Lanes
 
-Root scripts SHOULD expose these stable entry points once their milestone exists:
+Root scripts expose these stable entry points:
 
 ```text
 pnpm test                 # fast Vitest suite in run mode
@@ -365,8 +361,8 @@ pnpm verify:full          # every automated release lane above
 Lanes:
 
 - **During implementation:** focused affected tests and typecheck.
-- **Before completing any milestone:** `verify` plus the milestone's integration/browser
-  scenarios.
+- **Before completing a significant slice:** `verify` plus its affected integration and
+  browser scenarios.
 - **Before shipping:** `verify:full`, network matrix, soak suite, production smoke test,
   and the human playtest protocol.
 - **Precommit:** keep fast; do not run browsers or soak tests.
@@ -377,28 +373,7 @@ normalize blind reruns as success.
 
 ---
 
-## 13. Milestone Evidence
-
-Each milestone in `IMPLEMENTATION.md` adds its tests with the feature:
-
-1. **Monorepo:** static gates and a client render smoke test.
-2. **Connect & echo:** protocol, handshake, matchmaking, clock, and teardown integration.
-3. **Flight:** flight/boundary tests, remote interpolation tests, and a two-browser flight
-   smoke journey.
-4. **Ring & scoring:** full scoring/ring/lifecycle matrix and win/tie browser journeys.
-5. **Gun & prediction:** projectile/knockback/stumble tests, reconciliation suite, network
-   adversity, and deterministic browser combat scenario.
-6. **Juice, content & ship:** asset/license checks, HUD/layout checks, browser console/
-   network cleanliness, accessibility/readability review, full verification, soak,
-   production smoke, real-internet 1v1, and recorded release evidence.
-
-A milestone is not complete when its code merely runs. It is complete when its required
-behavior has passing evidence, known limitations are explicit, and no reproducible issue
-that violates the governing documents is being dismissed as visual noise.
-
----
-
-## 14. Definition of Verified
+## 13. Definition of Verified
 
 SkyRing is ready to ship when:
 

@@ -82,7 +82,7 @@ describe('stepMatch — playing', () => {
     }
   });
 
-  it('D012: plane contact cannot leave either participant below ground or outside the dome', () => {
+  it('GAME-6-BOUNDARY-INTERSECTION: plane contact cannot leave either participant below ground or outside the dome', () => {
     const config = testConfig();
     const state = createInitialMatchState(config);
     state.phase = MATCH_PHASE.Playing;

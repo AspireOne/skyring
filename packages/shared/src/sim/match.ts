@@ -21,15 +21,15 @@ export interface StepContext {
   readonly dt: number;
   readonly config: GameConfig;
   readonly rng: Rng;
-  /** Discrete feedback/lifecycle events produced this tick (IMPLEMENTATION §4.6). */
+  /** Discrete feedback/lifecycle events produced this tick (ARCHITECTURE §4). */
   readonly events: GameEvent[];
 }
 
 export type MatchInputs = Record<PlayerSlot, InputCommand>;
 
 /**
- * Advances the whole authoritative world by one fixed tick (IMPLEMENTATION
- * §5.3, DECISIONS D007). Per-tick order while playing: movement/upkeep → fire
+ * Advances the whole authoritative world by one fixed tick (ARCHITECTURE §3.2).
+ * Per-tick order while playing: movement/upkeep → fire
  * → projectiles → collisions → ring → scoring → regulation clock. Countdown
  * freezes the planes; Ended is terminal. Mutates `state` in place.
  */
@@ -83,7 +83,7 @@ function stepActivePlay(
   resolvePlaneBoundaries('b', state.planes.b, ctx.config, ctx.events);
   resolvePlanePlane(state.planes.a, state.planes.b, ctx.config, ctx.events);
   // Contact separation can push a plane across the ground/dome rim. Finish
-  // every authoritative tick in the legal boundary intersection (D012).
+  // every authoritative tick in the legal boundary intersection (GAME §6).
   resolvePlaneBoundaries('a', state.planes.a, ctx.config, ctx.events);
   resolvePlaneBoundaries('b', state.planes.b, ctx.config, ctx.events);
 
@@ -96,7 +96,7 @@ function stepActivePlay(
       endRegulation(state, ctx);
     }
   } else if (scorer !== null) {
-    // Sudden death: the first tick with a scorer ends the match (D007).
+    // Sudden death: the first tick with a scorer ends the match (GAME §7).
     endMatch(state, ctx);
   }
 }

@@ -97,7 +97,7 @@ Your weapon is the game's signature twist. It **never damages or destroys**. It 
 These exist so the game behaves predictably in weird moments.
 
 - **Both players outside the ring:** nobody scores. Normal state between engagements.
-- **Ring teleports while a player is inside it:** scoring simply stops at the old location and resumes wherever players stand relative to the new one. No points are awarded for "being where the ring used to be." The warning (§4.1) is what gives players a fair chance to follow it.
+- **Ring teleports while a player is inside it:** scoring simply stops at the old location and resumes wherever players stand relative to the new one. No points are awarded for "being where the ring used to be." The warning (§4) is what gives players a fair chance to follow it.
 - **A player is knocked out of the ring mid-scoring:** scoring for them stops the instant they cross the ring boundary. Being shoved out is a legitimate way to deny points — that's the design intent.
 - **A player is knocked _into_ the ring by a shot:** they count as inside the moment they cross in, stumble or not. Getting bonked into the scoring zone is a funny, valid outcome.
 - **Both inside, dead-even on center distance:** neither scores until someone gains the center (see §4.1).

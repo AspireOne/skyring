@@ -1,5 +1,5 @@
 /**
- * NTP-lite clock estimation (IMPLEMENTATION §4.5). From ping/pong round trips
+ * NTP-lite clock estimation (ARCHITECTURE §4.2). From ping/pong round trips
  * it estimates `serverTime ≈ localTime + offset`, keeping the sample with the
  * lowest RTT (the least jittered, most trustworthy estimate).
  *

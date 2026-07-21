@@ -9,7 +9,7 @@ import {
 } from '../types.js';
 
 /**
- * Builds the authoritative starting world for a match (IMPLEMENTATION §11).
+ * Builds the authoritative starting world for a match (ARCHITECTURE §3).
  * Planes spawn at opposite sides of the arena at `SPAWN_ALTITUDE`, facing the
  * arena center; the ring sits at center; the match opens in `Countdown`.
  *

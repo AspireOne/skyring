@@ -15,7 +15,7 @@ import { SoundEngine } from '../render/sound.js';
 /**
  * Boots and wires the client: a continuous render loop over the interpolated
  * world, and — once matched — a fixed-rate input loop that samples the keyboard
- * and sends intent (IMPLEMENTATION §8). Owns no game logic; the server is
+ * and sends intent (ARCHITECTURE §5). Owns no game logic; the server is
  * authoritative; the net layer predicts only the local plane and reconciles it
  * from recipient-specific snapshots.
  */

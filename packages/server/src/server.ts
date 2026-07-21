@@ -43,7 +43,7 @@ export interface SkyRingServerOptions {
   /** Injectable per-match seed source for reproducible simulations. */
   readonly nextSeed?: () => number;
   /**
-   * Test-only prescribed initial match state (TESTING §9, D011). Never set in
+   * Test-only prescribed initial match state (TESTING §9). Never set in
    * production; clients receive no state-mutation backdoor.
    */
   readonly createInitialState?: (

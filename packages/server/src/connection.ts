@@ -6,10 +6,10 @@ import type { ClientMessage, ServerMessage } from '@skyring/shared';
 import type { RawData, WebSocket } from 'ws';
 
 /**
- * Per-socket transport wrapper (IMPLEMENTATION §7). Owns nothing about game
+ * Per-socket transport wrapper (ARCHITECTURE §5). Owns nothing about game
  * logic: it assigns a stable id, parses/validates inbound frames at the
  * boundary, and exposes typed send/close helpers. Malformed frames are dropped
- * silently (IMPLEMENTATION §7.4).
+ * silently (ARCHITECTURE §4).
  */
 export class Connection {
   readonly id = randomUUID();

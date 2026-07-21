@@ -11,7 +11,7 @@ import { stepPlane } from './plane.js';
 const config = DEFAULT_GAME_CONFIG;
 const dt = 1 / config.SIM_HZ;
 
-describe('projectile spawning and stepping (D003, D008)', () => {
+describe('GAME-5-PROJECTILES: projectile spawning and stepping', () => {
   it('spawns at the muzzle along the documented local -Z nose', () => {
     const plane = makePlaneState({ pos: [10, 150, 20] });
     const bullet = spawnBullet(plane, 'a', 7, config);

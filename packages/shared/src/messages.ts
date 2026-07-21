@@ -9,10 +9,10 @@ import type {
 } from './types.js';
 
 /**
- * Wire message shapes (IMPLEMENTATION §10). Every message carries a string tag
+ * Wire message shapes (ARCHITECTURE §4). Every message carries a string tag
  * `t`. State consequences reconcile through {@link SnapshotMessage}; discrete
  * {@link EventMessage}s exist only so the client can *react* (juice, sound,
- * lifecycle) at the right instant (IMPLEMENTATION §4.6).
+ * lifecycle) at the right instant (ARCHITECTURE §4).
  */
 
 export type QueueMode = 'quick' | 'room';

@@ -24,7 +24,7 @@ export interface MatchDeps {
   readonly now: Now;
   /** Called once the match has fully ended so the owner can drop references. */
   readonly onEnded: (match: Match) => void;
-  /** Test-only prescribed initial state (TESTING §9, D011). */
+  /** Test-only prescribed initial state (TESTING §9). */
   readonly createInitialState?: (
     config: GameConfig,
     context: MatchContext,
@@ -46,7 +46,7 @@ interface PlayerRuntime {
 
 /**
  * A single self-contained 1v1 match: two connections, one authoritative
- * {@link MatchState}, and a fixed-tick loop (IMPLEMENTATION §7.3). Progression
+ * {@link MatchState}, and a fixed-tick loop (ARCHITECTURE §3.3). Progression
  * (`step`) is separated from scheduling so tests can run a whole match with
  * controlled time (TESTING §2).
  */

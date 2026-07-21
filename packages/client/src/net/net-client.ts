@@ -18,7 +18,7 @@ import type { InputAxes } from '../input/keyboard.js';
 /** Fallback interpolation delay before the match config arrives. */
 const DEFAULT_INTERP_DELAY_MS = 100;
 
-// Client-local clock-sync cadence (IMPLEMENTATION §4.5). These are purely local
+// Client-local clock-sync cadence (ARCHITECTURE §4.2). These are purely local
 // timing knobs — they never cross the wire or affect authority — so they live
 // here rather than in the shared match config.
 const INITIAL_PING_BURST = 5;
@@ -59,7 +59,7 @@ export interface NetClientDeps {
 }
 
 /**
- * The single seam to the wire on the client (IMPLEMENTATION §8.2). Owns the
+ * The single seam to the wire on the client (ARCHITECTURE §5). Owns the
  * WebSocket lifecycle, handshake, queueing, clock sync, and captures the latest
  * authoritative snapshot. Rendering/HUD read from it; it owns zero game logic.
  *
@@ -128,7 +128,7 @@ export class NetClient {
     this.prediction?.predict(input, this.latestSnapshot?.state.phase);
   }
 
-  /** The interpolated world at the current render time (IMPLEMENTATION §4.7). */
+  /** The interpolated world at the current render time (ARCHITECTURE §4.2). */
   renderView(): RenderView | undefined {
     const now = this.now();
     const delay = this.constants?.INTERP_DELAY_MS ?? DEFAULT_INTERP_DELAY_MS;

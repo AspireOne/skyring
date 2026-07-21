@@ -13,7 +13,7 @@ import type {
 } from '../types.js';
 
 /**
- * Springy arena resolution (GAME.md §6, DECISIONS D008). Planes bounce off the
+ * Springy arena resolution (GAME §6). Planes bounce off the
  * dome, the ground, and each other with restitution and positional
  * separation — never clamped or teleported as ordinary behavior. Mutates in
  * place and pushes `bounce` feedback events.

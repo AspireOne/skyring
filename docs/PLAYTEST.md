@@ -6,13 +6,13 @@ present automation or an AI inspection as human opinion.
 
 ## Pre-human presentation review — 2026-07-21
 
-- **Revision:** Milestone 6 worktree after `0217358`
+- **Revision:** `2407a76` (resulting presentation/content commit)
 - **Participants:** implementation agent operating production-built Chromium journeys;
   no human playtester
 - **Configuration:** production defaults for ordinary flight/combat; shortened,
   server-owned lifecycle/ring timing for deterministic browser journeys
-- **Network:** local WebSocket; the Milestone 5 synthetic latency/jitter/stall lane was
-  rerun separately
+- **Network:** local WebSocket; the synthetic latency/jitter/stall lane was rerun
+  separately
 - **Viewports:** 360×640 and 1440×900
 
 ### Evidence and decisions
@@ -52,5 +52,6 @@ Ask each participant, without coaching:
 4. Were camera motion, flashes, HUD, and audio comfortable for the full match?
 5. Where did the match drag, feel oppressive, or produce a memorable/funny moment?
 
-Any gameplay change discovered here updates `GAME.md`/`DECISIONS.md` first; any tuning
-change goes through `shared/constants.ts` and reruns the affected automated lanes.
+Any gameplay change discovered here updates `GAME.md` first; any technical contract change
+updates `ARCHITECTURE.md`. Tuning goes through `shared/constants.ts` and reruns the affected
+automated lanes.

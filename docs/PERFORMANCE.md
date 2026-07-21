@@ -13,6 +13,6 @@ software WebGL.
 | Aircraft assets       | Combined binary glTF source weight                           | 2 MiB           | Enforced by `tests/assets/assets.test.ts`                                                                                      |
 | Prediction correction | Maximum raw local error across the release network matrix    | 250 world units | Safety ceiling; smoothing/snap policy still converges rendered state below 0.001 units                                         |
 
-The initial shipping baseline and exact command results are recorded in `PROGRESS.md`.
-A real deployment must still monitor host CPU/memory and player-observed frame comfort;
-these local ceilings are release regression evidence, not operational telemetry.
+Each command reports its measured values alongside the enforced ceiling. A real deployment
+must still monitor host CPU/memory and player-observed frame comfort; these local ceilings
+are release regression evidence, not operational telemetry.

@@ -3,7 +3,7 @@
  *
  * Uses the small, well-distributed `mulberry32` generator. The sim only ever
  * draws randomness through an injected `Rng`, so a match is fully reproducible
- * from its seed (DECISIONS D006, D007; TESTING §6.5).
+ * from its seed (ARCHITECTURE §3.1; TESTING §6.5).
  */
 export interface Rng {
   /** Next float in [0, 1). */

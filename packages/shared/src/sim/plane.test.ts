@@ -81,7 +81,7 @@ describe('stepPlane — momentum and alignment', () => {
   });
 });
 
-describe('stepPlane — stumble (D006)', () => {
+describe('GAME-5-STUMBLE: stepPlane stumble', () => {
   it('ignores control, tumbles, and restores control on the defined tick', () => {
     const plane = makePlaneState({
       stumbleTicksRemaining: 5,

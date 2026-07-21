@@ -7,10 +7,9 @@ projectile knockback—never damage—to bonk one another out of position.
 The game is under active development. Read these documents before contributing:
 
 - [`GAME.md`](./docs/GAME.md) — gameplay and feel.
-- [`IMPLEMENTATION.md`](./docs/IMPLEMENTATION.md) — architecture and milestone order.
-- [`DECISIONS.md`](./docs/DECISIONS.md) — settled foundational choices.
+- [`ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — current technical invariants.
 - [`TESTING.md`](./docs/TESTING.md) — verification strategy.
-- [`PROGRESS.md`](./docs/PROGRESS.md) — current milestone and resumable handoff.
+- [`DEPLOYMENT.md`](./docs/DEPLOYMENT.md) — production runtime contract.
 - [`AGENTS.md`](./AGENTS.md) — repository workflow for implementation agents.
 
 ## Requirements
@@ -51,8 +50,8 @@ precommit.
 
 [`DEPLOYMENT.md`](./docs/DEPLOYMENT.md) defines the static-client/stateful-server topology,
 direct build/start commands, TLS/WebSocket requirements, and rollback procedure.
-[`RELEASE.md`](./docs/RELEASE.md) is the candidate evidence checklist; local automation cannot
-replace its public deployment and real-internet human gates.
+Local automation cannot replace the public deployment and real-internet human gates in
+[`PLAYTEST.md`](./docs/PLAYTEST.md).
 
 The pre-commit hook typechecks the workspace, reports project-wide Knip findings,
 lints staged source files, and formats supported staged files. TypeScript and ESLint

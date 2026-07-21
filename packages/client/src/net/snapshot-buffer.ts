@@ -37,7 +37,7 @@ export interface RenderView {
 
 /**
  * Buffers authoritative snapshots and reconstructs a smooth world at a chosen
- * render time (IMPLEMENTATION §4.7). Remote (and, pre-prediction, local)
+ * render time (ARCHITECTURE §4.2). Remote (and, pre-prediction, local)
  * entities are rendered slightly in the past: positions lerp and orientations
  * slerp between the two bracketing snapshots. On underrun it holds the newest
  * snapshot rather than guessing. Pure and WebGL-free, so it is unit-testable.

@@ -19,7 +19,7 @@ export interface LocalPredictionView extends RenderPlane {
 }
 
 /**
- * Predicts only the local plane and its own projectiles (IMPLEMENTATION §4.4).
+ * Predicts only the local plane and its own projectiles (ARCHITECTURE §4.1).
  * Authoritative snapshots replace the base state; acknowledged inputs are
  * discarded, and the remaining commands replay in sequence. The simulation
  * helpers are shared with the server, so weapon upkeep/recoil cannot diverge

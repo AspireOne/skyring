@@ -11,13 +11,13 @@ import {
 import type { InputCommand, PlaneState } from '../types.js';
 
 /**
- * Advances one plane by a fixed step (IMPLEMENTATION §5.3, §6). Pure and
+ * Advances one plane by a fixed step (ARCHITECTURE §3). Pure and
  * mutating-in-place; callable in isolation so the client can predict exactly
  * this plane (Milestone 5).
  *
  * The feel, in order:
  *  1. throttle nudges `flightSpeed` within `[MIN_SPEED, MAX_SPEED]`;
- *  2. control input rotates the nose (skipped while stumbling — D006);
+ *  2. control input rotates the nose (skipped while stumbling — GAME §5);
  *  3. total `vel` eases toward `nose * flightSpeed` at `VELOCITY_ALIGN` — this
  *     is the soul of the game: a shove injects sideways velocity that decays as
  *     alignment reasserts, so you drift and recover rather than snapping back;

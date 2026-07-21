@@ -2,9 +2,8 @@
 
 This file records confirmed functional defects in the game runtime. It excludes
 deployment, release, CI/CD, container, and test-infrastructure concerns. The
-confirmations below come from static code/data-flow traces against `docs/GAME.md`,
-`docs/IMPLEMENTATION.md`, and `docs/DECISIONS.md`. Per the review constraint, no tests
-were run.
+confirmations below come from static code/data-flow traces against `GAME.md` and
+`ARCHITECTURE.md`. Per the review constraint, no tests were run.
 
 Severities use:
 
@@ -29,14 +28,14 @@ Severities use:
   that declares a winner over an apparently tied final score violates the game's
   readability goal and makes the outcome look arbitrary.
 - **Verification:** `resolveScoring` adds `RING_POINTS_PER_SEC * dt`; with the defaults,
-  one scoring tick adds `1 * (1 / 60) = 0.01666…`. D007 ends sudden death on that first
+  one scoring tick adds `1 * (1 / 60) = 0.01666…`. Sudden death ends on that first
   scoring tick. `projectHud` then applies `Math.floor` to both scores, while `showResult`
   renders only `YOU WIN` / `YOU LOSE`. A sudden-death state of `10`–`10` therefore ends
   authoritatively at approximately `10.0167`–`10` but is displayed as `10`–`10`. The
   same contradiction occurs at regulation end whenever the lead is only fractional.
 - **Suggested fix:** use a score presentation that preserves meaningful fractional
   differences down to the smallest configured scoring tick, and show the formatted
-  final score on the result overlay. Keep the authoritative continuous scoring and D007
+  final score on the result overlay. Keep the authoritative continuous scoring and
   sudden-death ordering unchanged.
 
 ## B002 — The client does not consistently apply the authoritative match config
@@ -85,8 +84,8 @@ Severities use:
   reuses its last valid input for the missing ticks, so its plane legitimately moves
   farther. The next snapshot can only correct that divergence; it cannot recover the
   omitted local prediction steps before the correction becomes visible. This is also a
-  direct mismatch with `docs/IMPLEMENTATION.md` §4.2, which makes an accumulator and
-  bounded catch-up mandatory for both loops.
+  direct mismatch with `ARCHITECTURE.md` §3.3, which requires elapsed fixed-step
+  accounting with bounded catch-up in both loops.
 - **Suggested fix:** drive client prediction through a drift-corrected fixed-step
   accumulator using the authoritative `SIM_HZ`, with the documented bounded catch-up
   policy.
@@ -169,8 +168,8 @@ Severities use:
   but the chase camera has no free-look or off-screen indicator, so a destination behind
   the plane/camera is not visible without first turning away from the current course.
   `SoundEngine` handles `ringTeleport`, not the warning transition, and there is no
-  warning event. This falls short of both `docs/GAME.md` §4's visual-plus-audio warning
-  and `docs/IMPLEMENTATION.md` §8.3's HUD next-location ping.
+  warning event. This falls short of both `GAME.md` §4's visual-plus-audio warning and
+  `ARCHITECTURE.md` §5's next-destination requirement.
 - **Suggested fix:** add a screen-space direction/distance indicator for `nextCenter`
   and play a one-shot warning cue when `warning` changes from false to true, either via a
   dedicated authoritative event or deduplicated snapshot-state transition.

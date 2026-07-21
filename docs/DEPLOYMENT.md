@@ -58,10 +58,11 @@ to fingerprinted files under `assets/`.
 
 ## Release and rollback
 
-Run `pnpm verify:full` against the exact revision, then complete `RELEASE.md` against the
-public URLs. Deploy during a window with no active matches because a server restart ends
-all in-memory matches. Roll back both applications to the previous source revision if
-health, asset loading, browser console, matchmaking, or the two-player journey fails.
+Run `pnpm verify:full` against the exact revision and record the revision, public URLs,
+operator, and rollback revision in the release or hosting system. Deploy during a window
+with no active matches because a server restart ends all in-memory matches. Roll back both
+applications if health, asset loading, browser console, matchmaking, or the two-player
+journey fails.
 
 Local automation does not replace the public two-browser journey or the two-person
 real-internet playtest.

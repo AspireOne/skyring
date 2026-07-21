@@ -17,7 +17,7 @@ export interface MatchmakerDeps {
   /** Fresh seed per match; injectable so tests get reproducible simulations. */
   readonly nextSeed: () => number;
   /**
-   * Test-only prescribed initial state (TESTING §9, D011). Absent in
+   * Test-only prescribed initial state (TESTING §9). Absent in
    * production, where matches always start from `createInitialMatchState`.
    */
   readonly createInitialState?: (
@@ -27,7 +27,7 @@ export interface MatchmakerDeps {
 }
 
 /**
- * Contained 1v1 pairing (IMPLEMENTATION §7.2): a single quick-queue slot plus
+ * Contained 1v1 pairing (ARCHITECTURE §5): a single quick-queue slot plus
  * room-code rendezvous. Owns the set of live matches and routes per-connection
  * traffic to the right one. No shared mutable state leaks between matches.
  */
