@@ -353,9 +353,13 @@ pnpm test:watch           # local Vitest watch mode
 pnpm test:coverage        # diagnostic/enforced critical-module coverage
 pnpm test:integration     # real server + ws clients
 pnpm test:e2e             # production build + Playwright Chromium
+pnpm test:network         # deterministic latency/jitter/stall prediction matrix
+pnpm test:performance     # authoritative server/snapshot budgets
+pnpm test:performance:browser # isolated software-WebGL frame budget
 pnpm test:soak            # explicit long/random suite; not a precommit task
+pnpm test:smoke           # compiled production entry over HTTP + real ws
 pnpm verify               # typecheck + lint + knip + test + build
-pnpm verify:full          # verify + integration + e2e
+pnpm verify:full          # every automated release lane above
 ```
 
 Lanes:

@@ -88,7 +88,10 @@ export class Renderer {
   private loadedPlaneCount = 0;
 
   constructor(config: GameConfig) {
-    this.renderer = new WebGLRenderer({ antialias: true });
+    this.renderer = new WebGLRenderer({
+      antialias: false,
+      powerPreference: 'high-performance',
+    });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.canvas = this.renderer.domElement;

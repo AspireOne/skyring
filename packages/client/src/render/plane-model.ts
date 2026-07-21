@@ -1,12 +1,15 @@
 import {
   Box3,
   BoxGeometry,
+  type BufferGeometry,
   ConeGeometry,
   Group,
+  type Material,
   Mesh,
   MeshStandardMaterial,
   Vector3,
 } from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 import { PLANE_ASSETS } from '../assets.js';
 
@@ -24,13 +27,59 @@ export function loadPlaneModel(
         asset.path,
         ({ scene }) => {
           normalizeModel(scene, asset.targetSize, asset.yaw);
-          onLoad(scene);
+          onLoad(consolidateModel(scene));
         },
         undefined,
         (error) => onError(asset.path, error),
       );
     })
     .catch((error: unknown) => onError(asset.path, error));
+}
+
+/** Bake source-node transforms and merge meshes sharing a material into one draw call. */
+export function consolidateModel(source: Group): Group {
+  source.updateMatrixWorld(true);
+  const buckets = new Map<Material, BufferGeometry[]>();
+  let canMerge = true;
+
+  source.traverse((object) => {
+    if (!(object instanceof Mesh)) return;
+    if (Array.isArray(object.material)) {
+      canMerge = false;
+      return;
+    }
+    const geometries = buckets.get(object.material) ?? [];
+    geometries.push(object.geometry.clone().applyMatrix4(object.matrixWorld));
+    buckets.set(object.material, geometries);
+  });
+
+  if (!canMerge || buckets.size === 0) {
+    disposeBuckets(buckets);
+    return source;
+  }
+
+  const batches: Array<{ geometry: BufferGeometry; material: Material }> = [];
+  let mergeFailed = false;
+  for (const [material, geometries] of buckets) {
+    const merged = mergeGeometries(geometries, false);
+    if (!merged) {
+      mergeFailed = true;
+    } else {
+      batches.push({ geometry: merged, material });
+    }
+  }
+  disposeBuckets(buckets);
+  if (mergeFailed) {
+    disposeGeometries(batches.map(({ geometry }) => geometry));
+    return source;
+  }
+
+  const result = new Group();
+  for (const { geometry, material } of batches) {
+    result.add(new Mesh(geometry, material));
+  }
+  disposeSourceGeometry(source);
+  return result;
 }
 
 export function createFallbackPlane(color: number): Group {
@@ -81,6 +130,20 @@ function normalizeModel(model: Group, targetSize: number, yaw: number): void {
   model.updateMatrixWorld(true);
   new Box3().setFromObject(model).getCenter(_modelCenter);
   model.position.sub(_modelCenter);
+}
+
+function disposeBuckets(buckets: Map<Material, BufferGeometry[]>): void {
+  for (const geometries of buckets.values()) disposeGeometries(geometries);
+}
+
+function disposeGeometries(geometries: readonly BufferGeometry[]): void {
+  for (const geometry of geometries) geometry.dispose();
+}
+
+function disposeSourceGeometry(group: Group): void {
+  group.traverse((object) => {
+    if (object instanceof Mesh) object.geometry.dispose();
+  });
 }
 
 const _modelSize = new Vector3();

@@ -25,7 +25,7 @@ describe('resolvePlaneBoundaries — dome', () => {
     const events: GameEvent[] = [];
     resolvePlaneBoundaries('a', plane, config, events);
 
-    expect(plane.pos[0]).toBeCloseTo(config.DOME_RADIUS - r, 4);
+    expect(Math.hypot(...plane.pos)).toBeCloseTo(config.DOME_RADIUS - r, 8);
     expect(plane.vel[0]).toBeLessThan(0); // reversed inward
     expect(Math.abs(plane.vel[0])).toBeCloseTo(
       100 * config.BOUNDARY_RESTITUTION,
@@ -70,7 +70,21 @@ describe('resolvePlaneBoundaries — ground', () => {
     expect(plane.pos.every((c) => Number.isFinite(c))).toBe(true);
     expect(plane.pos[1]).toBeGreaterThanOrEqual(config.GROUND_Y);
     expect(Math.hypot(...plane.pos)).toBeLessThanOrEqual(
-      config.DOME_RADIUS + 1,
+      config.DOME_RADIUS - r + 1e-8,
+    );
+  });
+
+  it('GAME-6-BOUNDARY-INTERSECTION: ground correction cannot leave a plane outside the dome', () => {
+    const plane = makePlaneState({
+      pos: [config.DOME_RADIUS + 20, config.GROUND_Y - 1, 5],
+      vel: [100, -20, 10],
+    });
+
+    resolvePlaneBoundaries('a', plane, config, []);
+
+    expect(plane.pos[1]).toBe(config.GROUND_Y + r);
+    expect(Math.hypot(...plane.pos)).toBeLessThanOrEqual(
+      config.DOME_RADIUS - r + 1e-8,
     );
   });
 });

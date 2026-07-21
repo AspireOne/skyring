@@ -6,21 +6,22 @@ delete process.env.NO_COLOR;
 
 const clientUrl = 'http://127.0.0.1:4173';
 const serverUrl = 'http://127.0.0.1:4174';
+const measuringPerformance = process.env.SKYRING_PERFORMANCE === '1';
 
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
   // Each test owns one or two WebGL contexts; cap concurrency to avoid starving
   // browser animation/network tasks on modest CI runners.
-  workers: 2,
+  workers: measuringPerformance ? 1 : 2,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: clientUrl,
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    trace: measuringPerformance ? 'off' : 'retain-on-failure',
+    screenshot: measuringPerformance ? 'off' : 'only-on-failure',
+    video: measuringPerformance ? 'off' : 'retain-on-failure',
   },
   projects: [
     {

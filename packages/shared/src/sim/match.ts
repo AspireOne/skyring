@@ -82,6 +82,10 @@ function stepActivePlay(
   resolvePlaneBoundaries('a', state.planes.a, ctx.config, ctx.events);
   resolvePlaneBoundaries('b', state.planes.b, ctx.config, ctx.events);
   resolvePlanePlane(state.planes.a, state.planes.b, ctx.config, ctx.events);
+  // Contact separation can push a plane across the ground/dome rim. Finish
+  // every authoritative tick in the legal boundary intersection (D012).
+  resolvePlaneBoundaries('a', state.planes.a, ctx.config, ctx.events);
+  resolvePlaneBoundaries('b', state.planes.b, ctx.config, ctx.events);
 
   stepRing(state, ctx.config, ctx.rng, ctx.events);
   const scorer = resolveScoring(state, ctx.config, ctx.dt);

@@ -33,14 +33,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run fast verification and integration tests
-        run: pnpm verify && pnpm test:integration
+      - name: Run static, integration, network, performance, and soak gates
+        run: pnpm verify && pnpm test:integration && pnpm test:network && pnpm test:performance && pnpm test:soak
+
+      - name: Run compiled production smoke
+        run: pnpm test:smoke
+
+      - name: Build release containers
+        run: |
+          docker build -f Dockerfile.server -t skyring-server:verify .
+          docker build -f Dockerfile.client --build-arg VITE_SERVER_URL=wss://server.example.invalid -t skyring-client:verify .
+          docker compose config --quiet
 
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run production browser smoke tests
-        run: pnpm test:e2e
+        run: pnpm test:e2e && pnpm test:performance:browser
 
       - name: Retain browser failure evidence
         if: failure()

@@ -82,6 +82,27 @@ describe('stepMatch — playing', () => {
     }
   });
 
+  it('D012: plane contact cannot leave either participant below ground or outside the dome', () => {
+    const config = testConfig();
+    const state = createInitialMatchState(config);
+    state.phase = MATCH_PHASE.Playing;
+    state.phaseTicksRemaining = config.SIM_HZ;
+    const floor = config.GROUND_Y + config.PLANE_COLLISION_RADIUS;
+    state.planes.a.pos = [0, floor, 0];
+    state.planes.b.pos = [0, floor + 1, 0];
+    state.planes.a.vel = [0, 0, 0];
+    state.planes.b.vel = [0, 0, 0];
+
+    runTicks(state, 1, config);
+
+    for (const plane of Object.values(state.planes)) {
+      expect(plane.pos[1]).toBeGreaterThanOrEqual(floor);
+      expect(Math.hypot(...plane.pos)).toBeLessThanOrEqual(
+        config.DOME_RADIUS - config.PLANE_COLLISION_RADIUS + 1e-8,
+      );
+    }
+  });
+
   it('fires after movement, produces unique bounded bullets, and applies recoil', () => {
     const config = testConfig({ COUNTDOWN: 1, MATCH_DURATION: 10 });
     const state = createInitialMatchState(config);

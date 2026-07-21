@@ -5,12 +5,13 @@ milestone, verification result, decision, known issue, or next action changes.
 
 ## Current position
 
-- **Active milestone:** Milestone 6 acceptance — implementation and all locally
-  executable evidence are complete; the required human full-match session remains open.
+- **Active milestone:** external release acceptance — all Milestone 6/7 implementation and
+  locally executable evidence are complete; human, public-deployment, and real-internet
+  gates remain open.
 - **Milestone 5 is complete and verified.** Milestone 6 now has production models/audio,
   effects, responsive HUD, lifecycle/ring browser journeys, asset checks, and consolidated
   traceability.
-- **Governing decisions:** `DECISIONS.md` D001–D011.
+- **Governing decisions:** `DECISIONS.md` D001–D012.
 
 ## Milestones
 
@@ -20,7 +21,7 @@ milestone, verification result, decision, known issue, or next action changes.
 - [x] 4. Ring, scoring, HUD, and match lifecycle
 - [x] 5. Gun, knockback, stumble, prediction, and reconciliation
 - [ ] 6. Models, effects, audio, readability, and tuning (human acceptance pending)
-- [ ] 7. Deployment, soak, production smoke, and real-internet playtest
+- [ ] 7. Deployment, soak, production smoke, and real-internet playtest (external gates pending)
 
 ## Foundation checklist
 
@@ -36,6 +37,52 @@ milestone, verification result, decision, known issue, or next action changes.
 - [x] Run and record the complete foundation verification lane.
 
 ## Latest verification
+
+Milestone 7 local release candidate passed on 2026-07-21 with Node 24.15.0 and
+pnpm 11.15.1:
+
+- `pnpm verify:full` — passed as one canonical run: typecheck, ESLint, Knip,
+  157 unit tests, 2 asset tests, 2 requirement tests, production build, 18 real-WebSocket
+  integration tests, 5 network profiles, 2 server/snapshot performance tests, 1 isolated
+  browser-performance test, 2 soak tests, 1 compiled-production smoke, and 8 functional
+  Chromium journeys.
+- Network matrix maxima: raw correction 57.992 world units and 16 queued snapshots under
+  the 417 ms snapshot pause; every profile finished at `ackSeq=180`, empty retained input,
+  and rendered error below 0.001 units.
+- Performance baseline: 32 concurrent firing authoritative matches advanced at p95
+  0.449 ms per 60 Hz server frame; a maximum-64-projectile snapshot was 8,052 bytes;
+  isolated 960×540 software-WebGL client p50/p95 16.7/33.4 ms.
+- Soak: 12 distinct full production-duration matches each ran twice with identical final
+  state and per-tick invariants; 30 repeated real-WebSocket matches left zero connections,
+  matches, or waiters and a 4.14 MiB observed heap range.
+- `docker build` passed for digest-pinned server/client Dockerfiles; final local images
+  were 61,589,113 and 26,724,422 bytes. Both ran as their unprivileged users (`node`/
+  `nginx`), became healthy, and served their expected JSON health responses. `docker
+compose config --quiet` passed.
+
+### What Milestone 7 added
+
+- **deployment:** separate digest-pinned OCI builds for the stateful server and static
+  Nginx client, production-only server workspace packaging, unprivileged runtimes,
+  health checks, local production topology, caching policy, and the explicit TLS/WSS,
+  single-instance, rollout, and rollback runbook in `DEPLOYMENT.md`.
+- **release verification:** `verify:full` now includes the five-profile network matrix,
+  server/snapshot budgets, isolated browser frame budget, full-duration seeded simulation
+  replay, repeated real-socket lifecycle soak, compiled production entry smoke, and all
+  functional E2E journeys. CI runs the same lanes and builds both release containers.
+- **performance hardening:** source aircraft node transforms are baked and meshes merge by
+  material, cutting the 121-mesh biplane to material batches. High-performance WebGL
+  without costly MSAA brought the software baseline under its 50 ms p95 ceiling while the
+  1440×900 journey continues to prove layout/readability.
+- **lifecycle completion:** a production-browser disconnect journey now proves the live
+  survivor receives `YOU WIN` and terminal net state without console/network errors.
+- **soak regression D012:** the first full-duration soak found that sequential dome then
+  ground projection could leave a plane millimeters outside the legal rim, and that later
+  plane contact could push it below ground. Boundary projection now ends in the exact
+  dome/ground intersection and `stepMatch` stabilizes after plane separation; exact unit
+  tests and every soak tick enforce the invariant.
+- **release records:** `NETWORK.md`, `PERFORMANCE.md`, `RELEASE.md`, and the expanded
+  requirement matrix make budgets, profiles, evidence, and external sign-off explicit.
 
 Milestone 6 automated gates passed on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
 
@@ -186,15 +233,16 @@ W/S throttle · ↑/↓ pitch · ←/→ roll · A/D yaw · Space fire.
   play a full default four-minute match before Milestone 6 can be marked complete.
 - **Shipping has external gates.** Milestone 7 still needs a chosen deployment target and
   credentials plus a two-person real-internet 1v1. These cannot be truthfully replaced by
-  local automation; local deploy, soak, network, performance, and production-smoke work
-  can proceed meanwhile.
+  local automation. All local deploy, soak, network, performance, production-smoke, and
+  container evidence is now complete.
 
 ## Next action
 
-Checkpoint the complete M6 implementation, then build all locally executable Milestone 7
-release evidence (deployment artifacts, soak/network matrix, performance budgets, and
-production smoke). Record a real human full-match session and real-internet 1v1 before
-marking M6/M7 complete or calling the game shipped.
+Choose a stateful deployment target and provide publishing authority, then deploy the two
+images using `DEPLOYMENT.md`. Two people must complete the full-match `PLAYTEST.md` protocol
+locally and over the public real-internet deployment. Record the public URLs/image tags and
+observations in `RELEASE.md`; rerun affected lanes after any tuning before marking M6/M7
+complete or calling the game shipped.
 
 ---
 

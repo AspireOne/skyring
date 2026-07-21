@@ -1,0 +1,9 @@
+.git
+.github
+.husky
+coverage
+node_modules
+packages/*/dist
+playwright-report
+test-results
+*.tsbuildinfo

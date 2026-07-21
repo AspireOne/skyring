@@ -34,12 +34,23 @@ hosts the WebSocket endpoint; gameplay protocol work begins in Milestone 2.
 pnpm verify             # typecheck, lint, Knip, unit tests, production build
 pnpm test:integration   # real HTTP/WebSocket server tests
 pnpm test:e2e           # production build plus Playwright Chromium smoke
-pnpm verify:full        # all of the above
+pnpm test:network       # latency/jitter/stall prediction matrix
+pnpm test:performance   # server/snapshot release budgets
+pnpm test:soak          # seeded full matches plus repeated real sockets
+pnpm test:smoke         # compiled production server entrypoint
+pnpm verify:full        # every automated release gate above
 ```
 
 Use `pnpm test:watch` while developing and `pnpm test:coverage` for diagnostic
-coverage. Soak tests are intentionally kept out of precommit and run explicitly with
-`pnpm test:soak` once long-running scenarios exist.
+coverage. Soak, browser, and production-smoke tests are intentionally kept out of
+precommit.
+
+## Production
+
+[`DEPLOYMENT.md`](./DEPLOYMENT.md) defines the two-image static-client/stateful-server
+topology, local container check, TLS/WebSocket requirements, and rollback procedure.
+[`RELEASE.md`](./RELEASE.md) is the candidate evidence checklist; local automation cannot
+replace its public deployment and real-internet human gates.
 
 The pre-commit hook typechecks the workspace, reports project-wide Knip findings,
 lints staged source files, and formats supported staged files. TypeScript and ESLint

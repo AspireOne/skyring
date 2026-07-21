@@ -1,4 +1,10 @@
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  type Browser,
+  type BrowserContext,
+  type Page,
+} from '@playwright/test';
 
 import {
   trackBrowserEvidence,
@@ -6,6 +12,7 @@ import {
 } from './browser-evidence.js';
 
 interface Pair {
+  readonly contexts: [BrowserContext, BrowserContext];
   readonly pages: [Page, Page];
   readonly evidence: readonly BrowserEvidence[];
   readonly close: () => Promise<void>;
@@ -65,17 +72,44 @@ test('a regulation tie visibly enters sudden death and ends on its first score',
   await pair.close();
 });
 
+test('a live browser disconnect awards the remaining player', async ({
+  browser,
+}) => {
+  const pair = await openPair(browser, `LEAVE${Date.now() % 100000}`);
+  await Promise.all(
+    pair.pages.map((page) =>
+      expect(page.locator('#app')).toHaveAttribute(
+        'data-match-phase',
+        'playing',
+        { timeout: 5000 },
+      ),
+    ),
+  );
+
+  await pair.contexts[1].close();
+  await expect(pair.pages[0].locator('[data-testid="hud-result"]')).toHaveText(
+    'YOU WIN',
+  );
+  await expect(pair.pages[0].locator('#app')).toHaveAttribute(
+    'data-net-phase',
+    'ended',
+  );
+  expectClean([pair.evidence[0]!]);
+  await pair.contexts[0].close();
+});
+
 async function openPair(browser: Browser, room: string): Promise<Pair> {
-  const contexts = await Promise.all([
+  const contexts = (await Promise.all([
     browser.newContext(),
     browser.newContext(),
-  ]);
+  ])) as [BrowserContext, BrowserContext];
   const pages = (await Promise.all(
     contexts.map((context) => context.newPage()),
   )) as [Page, Page];
   const evidence = pages.map((page) => trackBrowserEvidence(page));
   await Promise.all(pages.map((page) => page.goto(`/?room=${room}`)));
   return {
+    contexts,
     pages,
     evidence,
     close: async () => {

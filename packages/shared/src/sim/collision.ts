@@ -51,6 +51,19 @@ export function resolvePlaneBoundaries(
     }
   }
 
+  // The sequential dome/ground corrections meet at a circular rim. Raising a
+  // radially projected point to the floor can put it just outside the sphere,
+  // so finish by projecting horizontal position into their exact intersection.
+  const horizontalLength = Math.hypot(pos.x, pos.z);
+  const horizontalLimit = Math.sqrt(
+    Math.max(0, domeLimit * domeLimit - pos.y * pos.y),
+  );
+  if (horizontalLength > horizontalLimit && horizontalLength > EPSILON) {
+    const scale = horizontalLimit / horizontalLength;
+    pos.x *= scale;
+    pos.z *= scale;
+  }
+
   plane.pos = fromVector3(pos);
   plane.vel = fromVector3(vel);
 }

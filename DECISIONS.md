@@ -102,3 +102,15 @@ for v1.
 Tests may supply validated config overrides, seeds, controlled time, and prescribed
 initial server state through test-only fixtures. Clients receive no authoritative state
 mutation backdoor, and test scenario endpoints/hooks are absent from production.
+
+## D012 — Collision resolution ends in the playable boundary intersection
+
+**Status:** accepted
+
+Each active tick resolves ordinary ground/dome contacts before plane-to-plane contact,
+then stabilizes both planes against the arena once more because symmetric contact
+separation can push one across a boundary. Dome and ground projection must finish in
+their exact geometric intersection, including the circular ground rim. This preserves
+the springy collision ruling while guaranteeing every authoritative tick ends with
+legal plane positions; it was adopted after the release soak reproduced a millimeter-
+scale boundary escape.

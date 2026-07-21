@@ -330,7 +330,7 @@ Hard rules:
 1. `stepPlane` for each plane (throttle changes and clamps `flightSpeed`; apply control torque unless stumbling; ease total `vel` toward `nose * flightSpeed` by `VELOCITY_ALIGN` without erasing external impulses; integrate position; decrement stumble/cooldown ticks; regen ammo).
 2. Handle `fire` intents: if `ammo ≥ AMMO_PER_SHOT` and `fireCooldownTicks ≤ 0` and not stumbling → spawn bullet at muzzle along nose, apply `RECOIL_IMPULSE` to shooter, spend ammo, set cooldown ticks.
 3. `stepBullets` (retain previous position, integrate, expire at lifetime or arena boundary).
-4. `collision`: swept bullet↔opponent → apply `HIT_IMPULSE` along bullet direction to victim `vel`, assign authoritative stumble ticks/angular velocity, consume bullet, emit `hit`. Plane↔plane → separate symmetrically and reflect relative velocity using `PLANE_COLLISION_RESTITUTION`. Plane↔boundary (dome sphere + ground plane) → reflect velocity about surface normal × `BOUNDARY_RESTITUTION`, nudge inside, emit `bounce`.
+4. `collision`: swept bullet↔opponent → apply `HIT_IMPULSE` along bullet direction to victim `vel`, assign authoritative stumble ticks/angular velocity, consume bullet, emit `hit`. Resolve plane↔boundary contacts, then plane↔plane separation/reflection using `PLANE_COLLISION_RESTITUTION`, then stabilize both planes against the boundaries again because contact separation can push a plane across the ground/dome rim. Boundary projection finishes inside the exact intersection of the ground half-space and dome sphere; outward contacts reflect velocity by `BOUNDARY_RESTITUTION` and emit `bounce`.
 5. `ring`: decrement `teleportTicksRemaining`; enter `warning` at the configured warning-tick threshold and pick+reveal `nextCenter`; at 0, teleport (respect `RING_MIN_TELEPORT_DIST`, keep the entire scoring sphere inside the playable dome/above ground), emit `ringTeleport`.
 6. **Scoring resolution (GAME.md §4, §4.1)** — the tug-of-war rule:
    - Compute `inRing` for each plane (distance to `ring.center` < `radius`).
@@ -475,7 +475,10 @@ Waiting ──(2 players)──▶ Countdown(COUNTDOWN s) ──▶ Playing(MATC
   - `test` / `test:watch` / `test:coverage` — Vitest fast suite and its local/coverage variants ([`TESTING.md`](./TESTING.md) §12).
   - `test:integration` — real server plus real `ws` clients.
   - `test:e2e` — production-built client/server journeys in Playwright.
+  - `test:network` — deterministic prediction matrix across latency, jitter, and stalls.
+  - `test:performance` / `test:performance:browser` — server/snapshot and isolated browser budgets.
   - `test:soak` — explicit seeded long/random runs; never part of precommit.
+  - `test:smoke` — compiled production server health/WebSocket lifecycle.
   - `verify` / `verify:full` — stable fast and complete verification entry points.
   - `lint` / `format` / `knip` — extend the existing configs to all packages.
 - **Dev runtime consumes shared TS source directly** (Vite + tsx resolve `@skyring/shared` to its `src`). No compile-shared-then-run loop in development.

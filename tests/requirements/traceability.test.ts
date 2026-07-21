@@ -22,6 +22,10 @@ describe('requirement traceability matrix', () => {
       'IMPL-4.4-RECONCILIATION',
       'IMPL-7.4-INPUT-VALIDATION',
       'IMPL-12-ASSET-LICENSES',
+      'IMPL-10-NETWORK-MATRIX',
+      'IMPL-10-SOAK',
+      'IMPL-10-PERFORMANCE',
+      'IMPL-15-PRODUCTION-SMOKE',
       'HUMAN-GAME-13-RHYTHM',
     ]) {
       expect(matrix).toContain(`\`${id}\``);

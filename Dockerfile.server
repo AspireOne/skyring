@@ -1,0 +1,32 @@
+FROM node:24-alpine@sha256:7fddd9ddeae8196abf4a3ef2de34e11f7b1a722119f91f28ddf1e99dcafdf114 AS build
+
+ENV HUSKY=0
+RUN corepack enable
+WORKDIR /workspace
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/client/package.json packages/client/package.json
+COPY packages/server/package.json packages/server/package.json
+COPY packages/shared/package.json packages/shared/package.json
+RUN pnpm install --frozen-lockfile
+
+COPY tsconfig.base.json tsconfig.json tsconfig.tests.json ./
+COPY packages/server packages/server
+COPY packages/shared packages/shared
+RUN pnpm exec tsc -b packages/shared packages/server --pretty \
+  && pnpm --filter @skyring/server deploy --prod --legacy /release
+
+FROM node:24-alpine@sha256:7fddd9ddeae8196abf4a3ef2de34e11f7b1a722119f91f28ddf1e99dcafdf114 AS runtime
+
+ENV HOST=0.0.0.0
+ENV PORT=8080
+WORKDIR /app
+
+COPY --from=build /release ./
+
+EXPOSE 8080
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -qO- "http://127.0.0.1:${PORT}/health" >/dev/null || exit 1
+
+USER node
+CMD ["node", "dist/index.js"]
