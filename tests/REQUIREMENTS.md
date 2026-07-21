@@ -1,6 +1,6 @@
 # SkyRing Requirement Traceability
 
-This is the consolidated matrix required by `TESTING.md` §3. Stable IDs map governing
+This is the consolidated matrix required by `docs/TESTING.md` §3. Stable IDs map governing
 behavior to its lowest practical executable evidence; browser journeys prove selected
 cross-layer paths. “Human” rows are deliberately not represented as automatable facts.
 
@@ -63,9 +63,9 @@ cross-layer paths. “Human” rows are deliberately not represented as automata
 
 | Requirement ID             | Acceptance question                                                                         | Required record                                 |
 | -------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `HUMAN-GAME-2-TONE`        | Do bonks, tumbles, and caroms read as playful rather than punitive?                         | Structured playtest in `PLAYTEST.md`            |
-| `HUMAN-GAME-4-VOLUME`      | Does the rendered sphere communicate the actual scoring boundary from common camera angles? | Structured playtest in `PLAYTEST.md`            |
-| `HUMAN-GAME-5-OPPORTUNITY` | Does a clean hit create meaningful scoring time without removing agency?                    | Structured playtest in `PLAYTEST.md`            |
+| `HUMAN-GAME-2-TONE`        | Do bonks, tumbles, and caroms read as playful rather than punitive?                         | Structured playtest in `docs/PLAYTEST.md`       |
+| `HUMAN-GAME-4-VOLUME`      | Does the rendered sphere communicate the actual scoring boundary from common camera angles? | Structured playtest in `docs/PLAYTEST.md`       |
+| `HUMAN-GAME-5-OPPORTUNITY` | Does a clean hit create meaningful scoring time without removing agency?                    | Structured playtest in `docs/PLAYTEST.md`       |
 | `HUMAN-GAME-7-FEEL`        | Is flight approachable, responsive, and recoverable at realistic latency?                   | Local and real-internet playtest records        |
 | `HUMAN-GAME-11-COMFORT`    | Are camera motion, tumble, flashes, audio, and HUD comfortable/readable for a full match?   | Structured full-match playtest                  |
 | `HUMAN-GAME-13-RHYTHM`     | Does four-minute play alternate scoring, bonk duels, and ring races without dead time/spam? | Structured full-match playtest and tuning notes |

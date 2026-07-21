@@ -6,24 +6,24 @@
 
 Read these files before changing architecture or gameplay:
 
-1. `GAME.md` defines what the game is and how it should feel.
-2. `IMPLEMENTATION.md` defines the technical architecture and milestone order.
-3. `DECISIONS.md` records resolved design and implementation choices.
-4. `TESTING.md` defines the evidence required for each milestone.
-5. `PROGRESS.md` is the durable handoff and verification log.
+1. `docs/GAME.md` defines what the game is and how it should feel.
+2. `docs/IMPLEMENTATION.md` defines the technical architecture and milestone order.
+3. `docs/DECISIONS.md` records resolved design and implementation choices.
+4. `docs/TESTING.md` defines the evidence required for each milestone.
+5. `docs/PROGRESS.md` is the durable handoff and verification log.
 
-If implementation reality requires a gameplay change, update `GAME.md` and
-`DECISIONS.md` before implementing it. If an architectural choice changes, update
-`IMPLEMENTATION.md` and `DECISIONS.md`. Tests must change with the governing behavior,
+If implementation reality requires a gameplay change, update `docs/GAME.md` and
+`docs/DECISIONS.md` before implementing it. If an architectural choice changes, update
+`docs/IMPLEMENTATION.md` and `docs/DECISIONS.md`. Tests must change with the governing behavior,
 never silently redefine it.
 
 ## Delivery workflow
 
-- Follow the milestones in `IMPLEMENTATION.md` §16 in order. Complete and verify one
+- Follow the milestones in `docs/IMPLEMENTATION.md` §16 in order. Complete and verify one
   vertical slice before deepening the next.
-- Update `PROGRESS.md` whenever a milestone, decision, limitation, or verification lane
+- Update `docs/PROGRESS.md` whenever a milestone, decision, limitation, or verification lane
   changes. It must be possible for a fresh agent to resume from that file.
-- Build tests with each feature according to `TESTING.md`; do not defer the test suite to
+- Build tests with each feature according to `docs/TESTING.md`; do not defer the test suite to
   a final pass.
 - Keep the authoritative simulation pure, fixed-step, seeded, and shared. Clients send
   intent only and never choose authoritative state or match configuration.
@@ -32,18 +32,18 @@ never silently redefine it.
 - Keep every gameplay/netcode tunable in the immutable shared game config. Avoid magic
   numbers in subsystem code.
 - Prefer the smallest maintainable implementation that satisfies the current milestone.
-  Do not prebuild deferred features from `GAME.md` §12.
+  Do not prebuild deferred features from `docs/GAME.md` §12.
 
 ## Verification
 
 - During implementation, run focused tests and affected typechecking.
 - Before marking a milestone complete, run `pnpm verify` plus its required integration
-  and browser scenarios from `TESTING.md` §13.
+  and browser scenarios from `docs/TESTING.md` §13.
 - Before shipping, run `pnpm verify:full`, the soak/network lanes, a production smoke
   test, and the human playtest protocol.
 - Treat flaky tests, browser console errors, leaked handles, and undocumented Knip/lint
   suppressions as defects.
-- Record exact commands and results in `PROGRESS.md`.
+- Record exact commands and results in `docs/PROGRESS.md`.
 
 ## Code and repository conventions
 

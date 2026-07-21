@@ -6,11 +6,11 @@ projectile knockback—never damage—to bonk one another out of position.
 
 The game is under active development. Read these documents before contributing:
 
-- [`GAME.md`](./GAME.md) — gameplay and feel.
-- [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) — architecture and milestone order.
-- [`DECISIONS.md`](./DECISIONS.md) — settled foundational choices.
-- [`TESTING.md`](./TESTING.md) — verification strategy.
-- [`PROGRESS.md`](./PROGRESS.md) — current milestone and resumable handoff.
+- [`GAME.md`](./docs/GAME.md) — gameplay and feel.
+- [`IMPLEMENTATION.md`](./docs/IMPLEMENTATION.md) — architecture and milestone order.
+- [`DECISIONS.md`](./docs/DECISIONS.md) — settled foundational choices.
+- [`TESTING.md`](./docs/TESTING.md) — verification strategy.
+- [`PROGRESS.md`](./docs/PROGRESS.md) — current milestone and resumable handoff.
 - [`AGENTS.md`](./AGENTS.md) — repository workflow for implementation agents.
 
 ## Requirements
@@ -49,9 +49,9 @@ precommit.
 
 ## Production
 
-[`DEPLOYMENT.md`](./DEPLOYMENT.md) defines the two-image static-client/stateful-server
+[`DEPLOYMENT.md`](./docs/DEPLOYMENT.md) defines the two-image static-client/stateful-server
 topology, local container check, TLS/WebSocket requirements, and rollback procedure.
-[`RELEASE.md`](./RELEASE.md) is the candidate evidence checklist; local automation cannot
+[`RELEASE.md`](./docs/RELEASE.md) is the candidate evidence checklist; local automation cannot
 replace its public deployment and real-internet human gates.
 
 The pre-commit hook typechecks the workspace, reports project-wide Knip findings,
