@@ -71,3 +71,9 @@ export { stepPlane } from './sim/plane.js';
 export { resolvePlaneBoundaries, resolvePlanePlane } from './sim/collision.js';
 export { stepMatch, type MatchInputs, type StepContext } from './sim/match.js';
 export { NEUTRAL_INPUT } from './sim/input.js';
+export {
+  pickRingCenter,
+  relocateForSuddenDeath,
+  resolveScoring,
+  stepRing,
+} from './sim/ring.js';

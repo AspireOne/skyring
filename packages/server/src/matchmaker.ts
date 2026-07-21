@@ -1,6 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
-import { type GameConfig, type InputCommand } from '@skyring/shared';
+import {
+  type GameConfig,
+  type InputCommand,
+  type MatchState,
+} from '@skyring/shared';
 
 import { Match } from './match.js';
 
@@ -11,6 +15,11 @@ export interface MatchmakerDeps {
   readonly now: Now;
   /** Fresh seed per match; injectable so tests get reproducible simulations. */
   readonly nextSeed: () => number;
+  /**
+   * Test-only prescribed initial state (TESTING §9, D011). Absent in
+   * production, where matches always start from `createInitialMatchState`.
+   */
+  readonly createInitialState?: (config: GameConfig) => MatchState;
 }
 
 /**
@@ -129,6 +138,9 @@ export class Matchmaker {
       {
         now: this.deps.now,
         onEnded: (ended) => this.removeMatch(ended),
+        ...(this.deps.createInitialState
+          ? { createInitialState: this.deps.createInitialState }
+          : {}),
       },
     );
     this.matches.add(match);

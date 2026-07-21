@@ -62,6 +62,12 @@ test('two players pair, fly, and steer their own planes', async ({
     },
   );
 
+  // The HUD renders from authoritative state: scoreboard + running clock.
+  await expect(pageA.locator('[data-testid="hud-timer"]')).toBeVisible();
+  await expect(pageA.locator('[data-testid="hud-my-score"]')).toHaveText(
+    /^\d+$/,
+  );
+
   // Player A steers; their own plane's position must change over the wire.
   const before = await localPos(pageA);
   await pageA.locator('body').click();

@@ -1,6 +1,8 @@
-import { DEFAULT_GAME_CONFIG } from '@skyring/shared';
+import { DEFAULT_GAME_CONFIG, type GameConfig } from '@skyring/shared';
 
 import { queueRequestFromLocation, serverWsUrl } from '../config.js';
+import { projectHud, ringStatus } from '../hud/hud-model.js';
+import { Hud } from '../hud/hud.js';
 import { CONTROL_HINTS, KeyboardInput } from '../input/keyboard.js';
 import { NetClient } from '../net/net-client.js';
 import { Renderer } from '../render/renderer.js';
@@ -16,6 +18,8 @@ export class GameController {
   private readonly net: NetClient;
   private readonly keyboard = new KeyboardInput();
   private readonly status: HTMLDivElement;
+  private readonly hud: Hud;
+  private config: GameConfig = DEFAULT_GAME_CONFIG;
 
   private detachKeyboard: (() => void) | undefined;
   private inputTimer: number | undefined;
@@ -34,11 +38,14 @@ export class GameController {
     this.status.className = 'net-status';
     root.append(this.status);
 
+    this.hud = new Hud(root);
+
     this.net = new NetClient(
       serverWsUrl(),
       queueRequestFromLocation(window.location.search),
     );
     this.net.onUpdate = () => this.onNetUpdate();
+    this.net.onMatchEnd = (message) => this.hud.showResult(message);
   }
 
   start(): void {
@@ -59,11 +66,15 @@ export class GameController {
     window.removeEventListener('resize', this.onResize);
     this.net.dispose();
     this.renderer.dispose();
+    this.hud.dispose();
   }
 
   private onNetUpdate(): void {
     this.root.dataset.netPhase = this.net.phase;
     if (this.net.phase === 'matched' && this.net.slot) {
+      if (this.net.constants) {
+        this.config = this.net.constants;
+      }
       this.renderer.setLocalSlot(this.net.slot);
       this.startInput();
     }
@@ -85,13 +96,27 @@ export class GameController {
   }
 
   private renderLoop = (): void => {
+    const slot = this.net.slot ?? 'a';
     const view = this.net.renderView();
     if (view) {
       this.renderer.update(view);
       this.root.dataset.matchPhase = view.phase;
       // Read-only diagnostic hook for automated tests (TESTING §9).
-      const localPos = view[this.net.slot ?? 'a'].pos;
-      window.__skyringState = { phase: view.phase, tick: view.tick, localPos };
+      window.__skyringState = {
+        phase: view.phase,
+        tick: view.tick,
+        localPos: view[slot].pos,
+      };
+    }
+    const snapshot = this.net.latestSnapshot;
+    if (snapshot) {
+      const { state } = snapshot;
+      this.renderer.updateRing(
+        state.ring,
+        ringStatus(state, slot),
+        state.ring.warning,
+      );
+      this.hud.update(projectHud(state, slot, this.config));
     }
     this.renderer.render();
     this.rafHandle = requestAnimationFrame(this.renderLoop);

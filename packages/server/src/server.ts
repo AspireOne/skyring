@@ -8,6 +8,7 @@ import {
   PROTOCOL_VERSION,
   type ClientMessage,
   type GameConfig,
+  type MatchState,
 } from '@skyring/shared';
 import { WebSocketServer } from 'ws';
 
@@ -40,6 +41,11 @@ export interface SkyRingServerOptions {
   readonly now?: Now;
   /** Injectable per-match seed source for reproducible simulations. */
   readonly nextSeed?: () => number;
+  /**
+   * Test-only prescribed initial match state (TESTING §9, D011). Never set in
+   * production; clients receive no state-mutation backdoor.
+   */
+  readonly createInitialState?: (config: GameConfig) => MatchState;
 }
 
 export interface SkyRingServer {
@@ -124,7 +130,13 @@ export function createSkyRingServer(
   const nextSeed =
     options.nextSeed ?? (() => Math.floor(Math.random() * 0x7f_ff_ff_ff));
 
-  const matchmaker = new Matchmaker(config, { now, nextSeed });
+  const matchmaker = new Matchmaker(config, {
+    now,
+    nextSeed,
+    ...(options.createInitialState
+      ? { createInitialState: options.createInitialState }
+      : {}),
+  });
   const connections = new Set<Connection>();
 
   const httpServer = createHttpServer((request, response) => {

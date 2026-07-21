@@ -5,10 +5,12 @@ import {
   Color,
   ConeGeometry,
   DirectionalLight,
+  DoubleSide,
   Fog,
   GridHelper,
   Group,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
   Scene,
@@ -17,12 +19,21 @@ import {
   WebGLRenderer,
 } from 'three';
 
+import type { RingStatus } from '../hud/hud-model.js';
 import type { RenderView } from '../net/snapshot-buffer.js';
-import type { GameConfig, PlayerSlot } from '@skyring/shared';
+import type { GameConfig, PlayerSlot, RingState } from '@skyring/shared';
 
 const SLOT_COLORS: Record<PlayerSlot, number> = {
   a: 0x4cc9f0, // cyan
   b: 0xf6546a, // coral
+};
+
+/** Ring tint by contest state (GAME.md §11). */
+const RING_COLORS: Record<RingStatus, number> = {
+  idle: 0x8fd0ff,
+  mine: 0x59f5a6,
+  theirs: 0xff6b7d,
+  contested: 0xffd166,
 };
 
 /** Chase-camera geometry (distance behind, height above, look-ahead). */
@@ -44,6 +55,10 @@ export class Renderer {
   private readonly camera: PerspectiveCamera;
   private readonly renderer: WebGLRenderer;
   private readonly planes: Record<PlayerSlot, Group>;
+  private readonly ring: Group;
+  private readonly ringFill: Mesh;
+  private readonly ringBands: Mesh;
+  private readonly ringMarker: Mesh;
   private readonly camTarget = new Vector3();
   private localSlot: PlayerSlot = 'a';
   private firstFrameDone = false;
@@ -75,6 +90,12 @@ export class Renderer {
       a: this.addPlane('a'),
       b: this.addPlane('b'),
     };
+
+    const ring = this.buildRing();
+    this.ring = ring.group;
+    this.ringFill = ring.fill;
+    this.ringBands = ring.bands;
+    this.ringMarker = ring.marker;
   }
 
   setLocalSlot(slot: PlayerSlot): void {
@@ -89,6 +110,28 @@ export class Renderer {
       group.quaternion.set(rot[0], rot[1], rot[2], rot[3]);
     }
     this.updateCamera();
+  }
+
+  updateRing(ring: RingState, status: RingStatus, warning: boolean): void {
+    this.ring.position.set(ring.center[0], ring.center[1], ring.center[2]);
+    this.ring.scale.setScalar(ring.radius);
+
+    const color = RING_COLORS[status];
+    (this.ringFill.material as MeshBasicMaterial).color.setHex(color);
+    (this.ringBands.material as MeshBasicMaterial).color.setHex(color);
+    // Pulse the fill opacity during the relocation warning.
+    const fill = this.ringFill.material as MeshBasicMaterial;
+    fill.opacity = warning
+      ? 0.1 + 0.08 * (1 + Math.sin(performance.now() / 120))
+      : 0.12;
+
+    if (warning && ring.nextCenter) {
+      this.ringMarker.visible = true;
+      this.ringMarker.position.set(...ring.nextCenter);
+      this.ringMarker.scale.setScalar(ring.radius);
+    } else {
+      this.ringMarker.visible = false;
+    }
   }
 
   render(): void {
@@ -166,6 +209,50 @@ export class Renderer {
     const sun = new DirectionalLight(0xffffff, 2.2);
     sun.position.set(1, 2, 1);
     this.scene.add(sun);
+  }
+
+  private buildRing(): {
+    group: Group;
+    fill: Mesh;
+    bands: Mesh;
+    marker: Mesh;
+  } {
+    const group = new Group();
+    // Unit sphere scaled by radius each frame — clearly a 3D volume (D009).
+    const fill = new Mesh(
+      new SphereGeometry(1, 24, 16),
+      new MeshBasicMaterial({
+        color: 0x8fd0ff,
+        transparent: true,
+        opacity: 0.12,
+        depthWrite: false,
+        side: DoubleSide,
+      }),
+    );
+    const bands = new Mesh(
+      new SphereGeometry(1, 24, 12),
+      new MeshBasicMaterial({
+        color: 0x8fd0ff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.35,
+      }),
+    );
+    group.add(fill, bands);
+
+    const marker = new Mesh(
+      new SphereGeometry(1, 16, 10),
+      new MeshBasicMaterial({
+        color: 0xffe08a,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.4,
+      }),
+    );
+    marker.visible = false;
+
+    this.scene.add(group, marker);
+    return { group, fill, bands, marker };
   }
 
   private addPlane(slot: PlayerSlot): Group {

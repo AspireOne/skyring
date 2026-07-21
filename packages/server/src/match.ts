@@ -24,6 +24,8 @@ export interface MatchDeps {
   readonly now: Now;
   /** Called once the match has fully ended so the owner can drop references. */
   readonly onEnded: (match: Match) => void;
+  /** Test-only prescribed initial state (TESTING §9, D011). */
+  readonly createInitialState?: (config: GameConfig) => MatchState;
 }
 
 interface PlayerRuntime {
@@ -58,7 +60,7 @@ export class Match {
     connectionB: Connection,
     private readonly deps: MatchDeps,
   ) {
-    this.state = createInitialMatchState(config);
+    this.state = (deps.createInitialState ?? createInitialMatchState)(config);
     this.players = {
       a: makePlayer('a', connectionA),
       b: makePlayer('b', connectionB),
@@ -93,6 +95,7 @@ export class Match {
       return;
     }
 
+    const prevPhase = this.state.phase;
     const inputs = this.drainInputs();
     const events: GameEvent[] = [];
     stepMatch(this.state, inputs, {
@@ -105,9 +108,36 @@ export class Match {
     if (events.length > 0) {
       this.broadcastEvents(events);
     }
+
+    if (this.state.phase === MATCH_PHASE.Ended) {
+      this.endByResult(prevPhase);
+      return;
+    }
     if (this.state.tick % this.snapshotInterval === 0) {
       this.broadcastSnapshot();
     }
+  }
+
+  /** The sim reached its natural conclusion (time-up or sudden death). */
+  private endByResult(prevPhase: MatchState['phase']): void {
+    const reason: MatchEndReason =
+      prevPhase === MATCH_PHASE.SuddenDeath ? 'suddenDeath' : 'time';
+    const winner = this.winningSlot();
+    this.broadcastSnapshot(); // let both clients see the final frozen world
+    this.finish((player) => ({
+      reason,
+      result:
+        winner === null ? 'draw' : player.slot === winner ? 'win' : 'lose',
+      notify: true,
+    }));
+  }
+
+  private winningSlot(): PlayerSlot | null {
+    const { a, b } = this.state.scores;
+    if (a === b) {
+      return null;
+    }
+    return a > b ? 'a' : 'b';
   }
 
   /**

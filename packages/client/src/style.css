@@ -23,15 +23,141 @@ canvas {
 
 .net-status {
   position: fixed;
-  top: 16px;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   padding: 8px 18px;
   border-radius: 999px;
   background: rgba(7, 17, 31, 0.72);
   color: #cfe7ff;
-  font-size: 15px;
+  font-size: 14px;
   letter-spacing: 0.02em;
   pointer-events: none;
   user-select: none;
+}
+
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  font-family: 'Trebuchet MS', sans-serif;
+}
+
+.hud__scoreboard {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 10px 26px;
+  border-radius: 16px;
+  background: rgba(7, 17, 31, 0.7);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+.hud__score {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  min-width: 48px;
+  text-align: center;
+}
+
+.hud__score--me {
+  color: #4cc9f0;
+}
+
+.hud__score--them {
+  color: #f6546a;
+}
+
+.hud__timer {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  color: #e8f2ff;
+  min-width: 64px;
+  text-align: center;
+}
+
+.hud__timer--sudden {
+  color: #ffd166;
+  font-weight: 700;
+  animation: hud-pulse 0.9s ease-in-out infinite;
+}
+
+.hud__ring {
+  position: absolute;
+  top: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(7, 17, 31, 0.6);
+}
+
+.hud__ring[data-status='mine'] {
+  color: #59f5a6;
+}
+
+.hud__ring[data-status='theirs'] {
+  color: #ff6b7d;
+}
+
+.hud__ring[data-status='contested'] {
+  color: #ffd166;
+}
+
+.hud__warning {
+  position: absolute;
+  top: 124px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffd166;
+  background: rgba(40, 20, 4, 0.65);
+  animation: hud-pulse 0.7s ease-in-out infinite;
+}
+
+.hud__result {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 72px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: rgba(4, 9, 18, 0.72);
+}
+
+.hud__result[data-outcome='win'] {
+  color: #59f5a6;
+}
+
+.hud__result[data-outcome='lose'] {
+  color: #ff6b7d;
+}
+
+.hud__result[data-outcome='draw'] {
+  color: #ffd166;
+}
+
+@keyframes hud-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
