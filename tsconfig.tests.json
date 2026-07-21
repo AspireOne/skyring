@@ -13,7 +13,6 @@
   "include": [
     "packages/**/*.test.ts",
     "packages/client/src/vite-env.d.ts",
-    "scripts/**/*.ts",
     "tests/**/*.test.ts",
     "tests/**/*.spec.ts"
   ]

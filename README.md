@@ -22,11 +22,13 @@ The game is under active development. Read these documents before contributing:
 
 ```sh
 pnpm install
-pnpm dev
+pnpm dev          # client and server together
+pnpm dev:client   # client only
+pnpm dev:server   # server only
 ```
 
 The Vite client and Node server run together. The server exposes `GET /health` and
-hosts the WebSocket endpoint; gameplay protocol work begins in Milestone 2.
+hosts the WebSocket endpoint.
 
 ## Verification
 
@@ -38,9 +40,7 @@ pnpm test:network       # latency/jitter/stall prediction matrix
 pnpm test:performance   # server/snapshot release budgets
 pnpm test:soak          # seeded full matches plus repeated real sockets
 pnpm test:smoke         # compiled production server entrypoint
-pnpm test:containers    # build and runtime-smoke both OCI images
 pnpm verify:full        # every automated release gate above
-pnpm verify:release     # verify:full plus release-container evidence
 ```
 
 Use `pnpm test:watch` while developing and `pnpm test:coverage` for diagnostic
@@ -49,8 +49,8 @@ precommit.
 
 ## Production
 
-[`DEPLOYMENT.md`](./docs/DEPLOYMENT.md) defines the two-image static-client/stateful-server
-topology, local container check, TLS/WebSocket requirements, and rollback procedure.
+[`DEPLOYMENT.md`](./docs/DEPLOYMENT.md) defines the static-client/stateful-server topology,
+direct build/start commands, TLS/WebSocket requirements, and rollback procedure.
 [`RELEASE.md`](./docs/RELEASE.md) is the candidate evidence checklist; local automation cannot
 replace its public deployment and real-internet human gates.
 

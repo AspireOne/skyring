@@ -1,60 +1,67 @@
 # SkyRing Deployment and Release Runbook
 
-SkyRing ships as two immutable artifacts: a static client and one long-lived,
-stateful Node server. The v1 server must run as exactly one instance because matchmaking
-and live matches are intentionally held in process memory.
+SkyRing deploys as a static Vite client and one long-lived, stateful Node server. The
+hosting platform serves the client files and manages TLS, domains, process restarts, and
+WebSocket forwarding; the repository owns only the application build and runtime.
 
-## Runtime contract
+## Development
 
-- **Server:** Node 24, `HOST=0.0.0.0`, platform-provided `PORT`, public `GET /health`, and
-  WebSocket upgrade support on the same listener. Terminate TLS at the platform/load
-  balancer and preserve WebSocket connections for at least the four-minute match plus
-  queue/countdown time.
-- **Client:** static files built with `VITE_SERVER_URL=wss://<public-server-host>`. This is
-  a build-time value, so changing the server origin requires rebuilding the client.
-- **Topology:** one server instance only. Do not enable horizontal autoscaling, edge/
-  serverless execution, or scale-to-zero while players may be connected.
-
-## OCI images
-
-Build locally from the repository root:
+Install dependencies and run both applications from the repository root:
 
 ```sh
-docker build -f Dockerfile.server -t skyring-server:release .
-docker build \
-  -f Dockerfile.client \
-  --build-arg VITE_SERVER_URL=wss://game-server.example.com \
-  -t skyring-client:release \
-  .
+pnpm install
+pnpm dev
 ```
 
-Both images run as unprivileged processes on port 8080 and contain health checks. The
-server build deploys only its production dependency graph and compiled workspace output;
-the client runtime contains only Nginx and the Vite artifact.
+Use `pnpm dev:client` and `pnpm dev:server` when separate terminals are preferable.
 
-`pnpm test:containers` reproducibly builds both images, validates the Compose definition,
-runs each image as its declared unprivileged user, and checks its published health
-response. For an interactive local production-topology check, `docker compose up --build`
-serves the client at `http://localhost:4173` and the authoritative server at
-`ws://localhost:8080`. Open two private browser contexts with the same `?room=CODE` query
-to pair them deterministically.
+## Production contract
 
-## Platform deployment
+- **Client:** build with `VITE_SERVER_URL=wss://<public-server-host>` and publish
+  `packages/client/dist` as a static site. The server URL is embedded at build time, so
+  changing it requires rebuilding the client.
+- **Server:** use Node 24, set `HOST=0.0.0.0` and the platform-provided `PORT`, and run the
+  compiled entry with `pnpm start:server`. The same listener provides public `GET /health`
+  and WebSocket upgrades.
+- **Topology:** run exactly one server instance. Matchmaking and live matches stay in
+  process memory, so do not enable horizontal autoscaling, serverless/edge execution, or
+  scale-to-zero while players may be connected.
+- **Network:** terminate TLS at the platform and preserve WebSocket connections for at
+  least the four-minute match plus queue and countdown time.
 
-1. Publish both images to the chosen registry using an immutable revision tag.
-2. Deploy the server first as one long-lived instance; set `HOST=0.0.0.0`, accept the
-   platform `PORT`, enable TLS/WebSocket upgrades, and wait for `/health` to pass.
-3. Build/deploy the client with the server's public `wss://` URL.
-4. Run `pnpm verify:release` locally against the exact revision, then perform the release
-   evidence in `RELEASE.md` against the public URLs.
-5. Roll back both artifacts to their prior immutable tags if health, browser console,
-   matchmaking, or the two-player journey fails. Existing in-memory matches do not
-   survive a server rollout, so announce/perform releases with no active players.
+## Direct deployment
 
-## Required production evidence
+Configure two applications from the same repository checkout in Coolify or an equivalent
+platform.
 
-Do not call a revision shipped until all items in `RELEASE.md` have real values: public
-client/server URLs, immutable image revisions, passing health and WebSocket smoke,
-two production browsers completing a match, and a two-person real-internet playtest.
-Local container and automated results are necessary but do not substitute for those
-external checks.
+### Server application
+
+```sh
+pnpm install --frozen-lockfile
+pnpm build:server
+pnpm start:server
+```
+
+Set `HOST=0.0.0.0`; let the platform provide `PORT`. Deploy the server first, enable
+WebSocket upgrades, and wait for its public `/health` endpoint to return 200 through TLS.
+
+### Client static site
+
+```sh
+pnpm install --frozen-lockfile
+VITE_SERVER_URL=wss://game-server.example.com pnpm build:client
+```
+
+Publish `packages/client/dist`. The platform must serve `index.html` for unknown paths so
+the client remains compatible with browser navigation, and should apply immutable caching
+to fingerprinted files under `assets/`.
+
+## Release and rollback
+
+Run `pnpm verify:full` against the exact revision, then complete `RELEASE.md` against the
+public URLs. Deploy during a window with no active matches because a server restart ends
+all in-memory matches. Roll back both applications to the previous source revision if
+health, asset loading, browser console, matchmaking, or the two-player journey fails.
+
+Local automation does not replace the public two-browser journey or the two-person
+real-internet playtest.

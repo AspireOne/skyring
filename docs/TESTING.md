@@ -358,10 +358,8 @@ pnpm test:performance     # authoritative server/snapshot budgets
 pnpm test:performance:browser # isolated software-WebGL frame budget
 pnpm test:soak            # explicit long/random suite; not a precommit task
 pnpm test:smoke           # compiled production entry over HTTP + real ws
-pnpm test:containers      # build and runtime-smoke both release images
 pnpm verify               # typecheck + lint + knip + test + build
 pnpm verify:full          # every automated release lane above
-pnpm verify:release       # verify:full + release-container runtime evidence
 ```
 
 Lanes:
@@ -390,10 +388,9 @@ Each milestone in `IMPLEMENTATION.md` adds its tests with the feature:
 4. **Ring & scoring:** full scoring/ring/lifecycle matrix and win/tie browser journeys.
 5. **Gun & prediction:** projectile/knockback/stumble tests, reconciliation suite, network
    adversity, and deterministic browser combat scenario.
-6. **Juice & content:** asset/license checks, HUD/layout checks, browser console/network
-   cleanliness, accessibility/readability review, and structured playtests.
-7. **Ship:** full verification, soak, production smoke, real-internet 1v1, and recorded
-   release evidence.
+6. **Juice, content & ship:** asset/license checks, HUD/layout checks, browser console/
+   network cleanliness, accessibility/readability review, full verification, soak,
+   production smoke, real-internet 1v1, and recorded release evidence.
 
 A milestone is not complete when its code merely runs. It is complete when its required
 behavior has passing evidence, known limitations are explicit, and no reproducible issue

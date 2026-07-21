@@ -479,8 +479,7 @@ Waiting ──(2 players)──▶ Countdown(COUNTDOWN s) ──▶ Playing(MATC
   - `test:performance` / `test:performance:browser` — server/snapshot and isolated browser budgets.
   - `test:soak` — explicit seeded long/random runs; never part of precommit.
   - `test:smoke` — compiled production server health/WebSocket lifecycle.
-  - `test:containers` — build and runtime-smoke both unprivileged OCI images.
-  - `verify` / `verify:full` / `verify:release` — fast, complete non-container, and complete release verification entry points.
+  - `verify` / `verify:full` — fast and complete verification entry points.
   - `lint` / `format` / `knip` — extend the existing configs to all packages.
 - **Dev runtime consumes shared TS source directly** (Vite + tsx resolve `@skyring/shared` to its `src`). No compile-shared-then-run loop in development.
 - **Keep the strict scaffold settings** (already present): `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`, `isolatedModules`. They apply to every package via `tsconfig.base.json`.
@@ -521,8 +520,7 @@ Each milestone ends at something runnable/testable. Do not skip ahead into netco
 3. **Flight, authoritative + interpolated.** Implement `stepPlane` + arena boundaries in `shared`. Server simulates both planes from real input; client renders **local plane from server snapshots** (no prediction yet — accept input lag) and the **remote plane interpolated**. Add flight/boundary invariants, interpolation tests, and a two-browser flight smoke journey. _Playable proof of the whole pipe._
 4. **Ring & scoring.** Ring dwell/teleport/warning + tug-of-war scoring in `shared`; HUD score + timer; full match lifecycle incl. countdown, time-up winner, and sudden death. Complete the ring/scoring/lifecycle requirement matrix and browser win/tie journeys. _Now it's a game you can win or lose._
 5. **Gun, knockback & prediction.** Projectiles, ammo/regen, recoil, hit→impulse+stumble (`GAME.md` §5). Add **client-side prediction + reconciliation** for the local plane (§4.4) so flight feels instant; error smoothing. Add projectile/collision invariants, complete reconciliation tests, a network-adversity lane, and a deterministic two-browser combat scenario. _The signature mechanic + the feel._
-6. **Juice & content.** Real glTF planes (§12), ring state visuals, effects for hits/bounces/stumbles/teleports, sound. Add asset/license validation, browser console/network cleanliness, HUD/layout checks, and structured playtests. Tune every constant against `GAME.md` §13's north star.
-7. **Ship.** Deploy per §15; pass full verification, network matrix, soak, and production smoke; playtest 1v1 over the real internet; iterate on `constants.ts` and rerun affected verification.
+6. **Juice, content & ship.** Real glTF planes (§12), ring state visuals, effects for hits/bounces/stumbles/teleports, sound. Add asset/license validation, browser console/network cleanliness, HUD/layout checks, and structured playtests. Pass full verification, network matrix, soak, and production smoke; deploy per §15 and playtest 1v1 over the real internet. Tune every constant against `GAME.md` §13's north star and rerun affected verification.
 
 The detailed evidence required at each milestone is in [`TESTING.md`](./TESTING.md) §13. A milestone is not complete until its behavior and integration gates pass.
 

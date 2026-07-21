@@ -39,9 +39,6 @@ jobs:
       - name: Run compiled production smoke
         run: pnpm test:smoke
 
-      - name: Build and smoke release containers
-        run: pnpm test:containers
-
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 

@@ -114,3 +114,14 @@ their exact geometric intersection, including the circular ground rim. This pres
 the springy collision ruling while guaranteeing every authoritative tick ends with
 legal plane positions; it was adopted after the release soak reproduced a millimeter-
 scale boundary escape.
+
+## D013 — Deployment uses direct platform primitives
+
+**Status:** accepted
+
+Build the Vite client as static files for the hosting platform to serve, and run the
+compiled Node server directly as one long-lived process. SkyRing does not own Docker,
+Compose, or a static-server configuration unless a concrete deployment target later
+requires them. The application retains explicit build/start commands, health checks,
+full production-artifact verification, and the single-instance server constraint without
+maintaining an additional packaging layer.

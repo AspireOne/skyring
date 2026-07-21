@@ -5,13 +5,13 @@ milestone, verification result, decision, known issue, or next action changes.
 
 ## Current position
 
-- **Active milestone:** external release acceptance — all Milestone 6/7 implementation and
+- **Active milestone:** Milestone 6 external release acceptance — all implementation and
   locally executable evidence are complete; human, public-deployment, and real-internet
   gates remain open.
 - **Milestone 5 is complete and verified.** Milestone 6 now has production models/audio,
   effects, responsive HUD, lifecycle/ring browser journeys, asset checks, and consolidated
   traceability.
-- **Governing decisions:** `DECISIONS.md` D001–D012.
+- **Governing decisions:** `DECISIONS.md` D001–D013.
 
 ## Milestones
 
@@ -20,8 +20,7 @@ milestone, verification result, decision, known issue, or next action changes.
 - [x] 3. Authoritative flight, boundaries, and remote interpolation
 - [x] 4. Ring, scoring, HUD, and match lifecycle
 - [x] 5. Gun, knockback, stumble, prediction, and reconciliation
-- [ ] 6. Models, effects, audio, readability, and tuning (human acceptance pending)
-- [ ] 7. Deployment, soak, production smoke, and real-internet playtest (external gates pending)
+- [ ] 6. Models, effects, audio, readability, tuning, and shipping (external acceptance pending)
 
 ## Foundation checklist
 
@@ -38,41 +37,35 @@ milestone, verification result, decision, known issue, or next action changes.
 
 ## Latest verification
 
-Milestone 7 local release candidate passed on 2026-07-21 with Node 24.15.0 and
+The direct-deployment Milestone 6 candidate passed on 2026-07-22 with Node 24.15.0 and
 pnpm 11.15.1:
 
-- `pnpm verify:release` — passed as one canonical run, composing `verify:full` with the
-  container runtime smoke: typecheck, ESLint, Knip,
-  157 unit tests, 2 asset tests, 2 requirement tests, production build, 18 real-WebSocket
+- `pnpm verify:full` — passed as one canonical run: typecheck, ESLint, Knip, 157 unit
+  tests, 2 asset tests, 2 requirement tests, production build, 18 real-WebSocket
   integration tests, 5 network profiles, 2 server/snapshot performance tests, 1 isolated
   browser-performance test, 2 soak tests, 1 compiled-production smoke, and 8 functional
   Chromium journeys.
+- `pnpm build:client` and `pnpm build:server` passed independently. The resulting server
+  started through `pnpm start:server` and returned its expected public `/health` payload.
 - Network matrix maxima: raw correction 57.992 world units and 16 queued snapshots under
   the 417 ms snapshot pause; every profile finished at `ackSeq=180`, empty retained input,
   and rendered error below 0.001 units.
 - Performance baseline: 32 concurrent firing authoritative matches advanced at p95
-  0.416 ms per 60 Hz server frame; a maximum-64-projectile snapshot was 8,052 bytes;
+  0.365 ms per 60 Hz server frame; a maximum-64-projectile snapshot was 8,052 bytes;
   isolated 960×540 software-WebGL client p95 33.4 ms.
 - Soak: 12 distinct full production-duration matches each ran twice with identical final
   state and per-tick invariants; 30 repeated real-WebSocket matches left zero connections,
   matches, or waiters and a 4.14 MiB observed heap range.
-- `docker build` passed for digest-pinned server/client Dockerfiles; final local images
-  were 61,589,492 and 26,724,422 bytes. Both ran as their unprivileged users (`node`/
-  `nginx`), became healthy, and served their expected JSON health responses.
-  `docker compose config --quiet` passed.
-- The same container build/user/health/cleanup evidence is now reproducible through
-  `pnpm test:containers`; `pnpm verify:release` composes it with every non-container gate.
 
-### What Milestone 7 added
+### What final Milestone 6 verification added
 
-- **deployment:** separate digest-pinned OCI builds for the stateful server and static
-  Nginx client, production-only server workspace packaging, unprivileged runtimes,
-  health checks, local production topology, caching policy, and the explicit TLS/WSS,
-  single-instance, rollout, and rollback runbook in `DEPLOYMENT.md`.
+- **deployment:** direct build/start commands for a platform-served static client and one
+  long-lived Node server, plus the explicit TLS/WSS, single-instance, rollout, and
+  rollback runbook in `DEPLOYMENT.md`.
 - **release verification:** `verify:full` now includes the five-profile network matrix,
   server/snapshot budgets, isolated browser frame budget, full-duration seeded simulation
   replay, repeated real-socket lifecycle soak, compiled production entry smoke, and all
-  functional E2E journeys. CI runs the same lanes and builds both release containers.
+  functional E2E journeys. CI runs the same lanes.
 - **performance hardening:** source aircraft node transforms are baked and meshes merge by
   material, cutting the 121-mesh biplane to material batches. High-performance WebGL
   without costly MSAA brought the software baseline under its 50 ms p95 ceiling while the
@@ -234,18 +227,18 @@ W/S throttle · ↑/↓ pitch · ←/→ roll · A/D yaw · Space fire.
 - **Human acceptance is still required.** `PLAYTEST.md` deliberately distinguishes the
   completed automated/visual inspection from the human-only M6 judgments. A person must
   play a full default four-minute match before Milestone 6 can be marked complete.
-- **Shipping has external gates.** Milestone 7 still needs a chosen deployment target and
+- **Shipping has external gates.** Milestone 6 still needs a chosen deployment target and
   credentials plus a two-person real-internet 1v1. These cannot be truthfully replaced by
-  local automation. All local deploy, soak, network, performance, production-smoke, and
-  container evidence is now complete.
+  local automation. All local soak, network, performance, and production-smoke evidence
+  is complete.
 
 ## Next action
 
-Choose a stateful deployment target and provide publishing authority, then deploy the two
-images using `DEPLOYMENT.md`. Two people must complete the full-match `PLAYTEST.md` protocol
-locally and over the public real-internet deployment. Record the public URLs/image tags and
-observations in `RELEASE.md`; rerun affected lanes after any tuning before marking M6/M7
-complete or calling the game shipped.
+Choose a stateful deployment target and provide publishing authority, then deploy the
+static client and direct Node server using `DEPLOYMENT.md`. Two people must complete the
+full-match `PLAYTEST.md` protocol locally and over the public real-internet deployment.
+Record the public URLs and observations in `RELEASE.md`; rerun affected lanes after any
+tuning before marking M6 complete or calling the game shipped.
 
 ---
 
@@ -338,9 +331,9 @@ cover: `GAME-5-MUTUAL-HIT`, `GAME-9-KNOCKED-INTO-RING`, `GAME-9-SHOOT-WHILE-STUM
 `GAME-9-OUT-OF-AMMO`, `IMPL-4.4-RECONCILIATION`.
 
 Then Milestone 6 (glTF planes + `public/assets/CREDITS.md`, effects/audio, readability,
-tune every constant vs `GAME.md` §13) and Milestone 7 (deploy, soak, prod smoke,
-real-internet playtest). Also clear the "Known issues" TODOs (win/tie browser journey,
-traceability matrix file) by/ during M6.
+tune every constant vs `GAME.md` §13, deploy, soak, production smoke, and real-internet
+playtest). Also clear the "Known issues" TODOs (win/tie browser journey and traceability
+matrix file) during M6.
 
 ### Conventions reminder
 

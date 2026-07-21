@@ -36,7 +36,7 @@ complete match; no automated pass is treated as proof of fun.
 
 Run two production clients through one complete four-minute match, including at least
 one clean knock-out, one ring relocation race, a recovery from stumble, and—if the score
-ties—a sudden-death finish. Repeat under realistic internet latency during Milestone 7.
+ties—a sudden-death finish. Repeat under realistic internet latency before shipping.
 
 Record one row per session:
 
