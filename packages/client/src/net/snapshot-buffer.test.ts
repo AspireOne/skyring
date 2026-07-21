@@ -36,6 +36,29 @@ describe('SnapshotBuffer', () => {
     expect(view?.a.pos[0]).toBeCloseTo(5, 5);
   });
 
+  it('interpolates a persistent projectile by id', () => {
+    const buffer = new SnapshotBuffer();
+    const first = snapshotAt(0, 1000, [0, 0, 0]);
+    first.state.bullets.push({
+      id: 1,
+      owner: 'a',
+      previousPos: [0, 150, 0],
+      pos: [0, 150, 0],
+      vel: [0, 0, -400],
+      lifetimeTicksRemaining: 10,
+    });
+    const second = snapshotAt(1, 1100, [0, 0, 0]);
+    second.state.bullets.push({
+      ...first.state.bullets[0]!,
+      previousPos: [0, 150, 0],
+      pos: [0, 150, -40],
+    });
+    buffer.push(first);
+    buffer.push(second);
+
+    expect(buffer.sample(1050)?.bullets[0]?.pos[2]).toBeCloseTo(-20, 5);
+  });
+
   it('holds the earliest snapshot when render time precedes the buffer', () => {
     const buffer = new SnapshotBuffer();
     buffer.push(snapshotAt(0, 1000, [3, 0, 0]));

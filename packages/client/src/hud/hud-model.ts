@@ -18,6 +18,9 @@ export interface HudModel {
   nextCenter: Vec3 | null;
   suddenDeath: boolean;
   countdown: number | null;
+  ammo: number;
+  ammoMax: number;
+  ammoFraction: number;
 }
 
 /**
@@ -47,6 +50,12 @@ export function projectHud(
     nextCenter: state.ring.nextCenter,
     suddenDeath,
     countdown,
+    ammo: state.planes[localSlot].ammo,
+    ammoMax: config.AMMO_MAX,
+    ammoFraction: Math.max(
+      0,
+      Math.min(1, state.planes[localSlot].ammo / config.AMMO_MAX),
+    ),
   };
 }
 

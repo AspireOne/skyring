@@ -81,4 +81,60 @@ describe('stepMatch — playing', () => {
       expect(plane.pos[1]).toBeGreaterThanOrEqual(config.GROUND_Y - 1e-6);
     }
   });
+
+  it('fires after movement, produces unique bounded bullets, and applies recoil', () => {
+    const config = testConfig({ COUNTDOWN: 1, MATCH_DURATION: 10 });
+    const state = createInitialMatchState(config);
+    state.phase = MATCH_PHASE.Playing;
+    state.phaseTicksRemaining = config.MATCH_DURATION * config.SIM_HZ;
+    state.planes.a.pos = [-300, 300, 0];
+    state.planes.b.pos = [300, 300, 0];
+
+    runTicks(state, config.SIM_HZ, config, 2, () =>
+      makeInputs({ fire: true }, { fire: true }),
+    );
+
+    expect(state.nextBulletId).toBeGreaterThan(1);
+    expect(state.bullets.length).toBeLessThanOrEqual(config.MAX_BULLETS);
+    expect(new Set(state.bullets.map(({ id }) => id)).size).toBe(
+      state.bullets.length,
+    );
+    expect(state.planes.a.ammo).toBeLessThan(config.AMMO_MAX);
+  });
+
+  it('GAME-9-KNOCKED-INTO-RING: starts scoring on the first movement tick that a hit pushes a plane inside', () => {
+    const config = testConfig({ MATCH_DURATION: 10 });
+    const state = createInitialMatchState(config);
+    state.phase = MATCH_PHASE.Playing;
+    state.phaseTicksRemaining = config.MATCH_DURATION * config.SIM_HZ;
+    state.ring.center = [0, 150, 0];
+    state.ring.teleportTicksRemaining = 10_000;
+    state.planes.a.pos = [500, 150, 0];
+    state.planes.b.pos = [0, 150, config.RING_RADIUS + 0.5];
+    state.planes.a.vel = [0, 0, 0];
+    state.planes.b.vel = [0, 0, 0];
+    state.bullets = [
+      {
+        id: 1,
+        owner: 'a',
+        previousPos: [0, 150, config.RING_RADIUS + 10],
+        pos: [0, 150, config.RING_RADIUS + 10],
+        vel: [0, 0, -config.BULLET_SPEED],
+        lifetimeTicksRemaining: 10,
+      },
+    ];
+
+    runTicks(state, 1, config);
+    expect(state.planes.b.stumbleTicksRemaining).toBeGreaterThan(0);
+    expect(state.planes.b.inRing).toBe(false);
+    expect(state.scores.b).toBe(0);
+
+    runTicks(state, 1, config);
+    expect(state.planes.b.inRing).toBe(true);
+    expect(state.planes.b.scoring).toBe(true);
+    expect(state.scores.b).toBeCloseTo(
+      config.RING_POINTS_PER_SEC / config.SIM_HZ,
+      8,
+    );
+  });
 });

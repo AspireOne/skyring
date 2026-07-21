@@ -13,6 +13,7 @@ describe('createInitialMatchState', () => {
     expect(state.phase).toBe(MATCH_PHASE.Countdown);
     expect(state.scores).toEqual({ a: 0, b: 0 });
     expect(state.bullets).toEqual([]);
+    expect(state.nextBulletId).toBe(1);
     expect(state.tick).toBe(0);
     expect(state.phaseTicksRemaining).toBe(config.COUNTDOWN * config.SIM_HZ);
   });

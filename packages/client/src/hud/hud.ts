@@ -14,6 +14,8 @@ export class Hud {
   private readonly timer: HTMLDivElement;
   private readonly ringPill: HTMLDivElement;
   private readonly warning: HTMLDivElement;
+  private readonly ammoValue: HTMLSpanElement;
+  private readonly ammoFill: HTMLDivElement;
   private readonly result: HTMLDivElement;
 
   constructor(parent: HTMLElement) {
@@ -34,11 +36,27 @@ export class Hud {
     this.warning = el('div', 'hud__warning');
     this.warning.dataset.testid = 'hud-warning';
 
+    const ammo = el('div', 'hud__ammo');
+    ammo.dataset.testid = 'hud-ammo';
+    const ammoLabel = el('div', 'hud__ammo-label');
+    this.ammoValue = el('span', 'hud__ammo-value');
+    ammoLabel.append('BONK ENERGY', this.ammoValue);
+    const ammoTrack = el('div', 'hud__ammo-track');
+    this.ammoFill = el('div', 'hud__ammo-fill');
+    ammoTrack.append(this.ammoFill);
+    ammo.append(ammoLabel, ammoTrack);
+
     this.result = el('div', 'hud__result');
     this.result.dataset.testid = 'hud-result';
     this.result.hidden = true;
 
-    this.root.append(scoreboard, this.ringPill, this.warning, this.result);
+    this.root.append(
+      scoreboard,
+      this.ringPill,
+      this.warning,
+      ammo,
+      this.result,
+    );
     parent.append(this.root);
   }
 
@@ -55,6 +73,9 @@ export class Hud {
 
     this.warning.hidden = !model.warning;
     this.warning.textContent = model.warning ? '⚠ Ring relocating!' : '';
+
+    this.ammoValue.textContent = `${Math.floor(model.ammo)} / ${model.ammoMax}`;
+    this.ammoFill.style.transform = `scaleX(${model.ammoFraction})`;
   }
 
   showResult(message: MatchEndMessage): void {

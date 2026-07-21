@@ -10,6 +10,7 @@ import {
 } from '@skyring/shared';
 
 import { ClockSync } from './clock-sync.js';
+import { LocalPrediction } from './local-prediction.js';
 import { SnapshotBuffer, type RenderView } from './snapshot-buffer.js';
 
 import type { InputAxes } from '../input/keyboard.js';
@@ -72,6 +73,8 @@ export class NetClient {
   readonly clock = new ClockSync();
   readonly buffer = new SnapshotBuffer();
   private inputSeq = 0;
+  private prediction: LocalPrediction | undefined;
+  private lastRenderTime: number | undefined;
 
   onUpdate: (() => void) | undefined;
   onEvent: ((message: EventMessage) => void) | undefined;
@@ -112,25 +115,45 @@ export class NetClient {
   /** Send one control frame; assigns the monotonic input sequence. */
   sendInput(axes: InputAxes): void {
     this.inputSeq += 1;
-    this.send({
-      t: 'input',
-      input: {
-        seq: this.inputSeq,
-        tick: this.latestSnapshot?.tick ?? 0,
-        throttle: axes.throttle,
-        pitch: axes.pitch,
-        roll: axes.roll,
-        yaw: axes.yaw,
-        fire: axes.fire,
-      },
-    });
+    const input = {
+      seq: this.inputSeq,
+      tick: this.latestSnapshot?.tick ?? 0,
+      throttle: axes.throttle,
+      pitch: axes.pitch,
+      roll: axes.roll,
+      yaw: axes.yaw,
+      fire: axes.fire,
+    };
+    this.send({ t: 'input', input });
+    this.prediction?.predict(input, this.latestSnapshot?.state.phase);
   }
 
   /** The interpolated world at the current render time (IMPLEMENTATION §4.7). */
   renderView(): RenderView | undefined {
+    const now = this.now();
     const delay = this.constants?.INTERP_DELAY_MS ?? DEFAULT_INTERP_DELAY_MS;
-    const renderTime = this.clock.estimateServerTime(this.now()) - delay;
-    return this.buffer.sample(renderTime);
+    const renderTime = this.clock.estimateServerTime(now) - delay;
+    const view = this.buffer.sample(renderTime);
+    if (!view || !this.slot) {
+      return view;
+    }
+
+    const elapsed =
+      this.lastRenderTime === undefined
+        ? 0
+        : Math.max(0, (now - this.lastRenderTime) / 1000);
+    this.lastRenderTime = now;
+    const local = this.prediction?.sample(elapsed);
+    if (!local) {
+      return view;
+    }
+
+    view[this.slot] = { pos: local.pos, rot: local.rot };
+    view.bullets = [
+      ...view.bullets.filter(({ owner }) => owner !== this.slot),
+      ...local.bullets,
+    ];
+    return view;
   }
 
   dispose(): void {
@@ -183,10 +206,15 @@ export class NetClient {
         this.phase = 'matched';
         this.slot = message.yourSlot;
         this.constants = message.constants;
+        this.prediction = new LocalPrediction(
+          message.yourSlot,
+          message.constants,
+        );
         break;
       case 'snapshot':
         this.latestSnapshot = message;
         this.buffer.push(message);
+        this.prediction?.reconcile(message.state, message.ackSeq);
         break;
       case 'event':
         this.onEvent?.(message);

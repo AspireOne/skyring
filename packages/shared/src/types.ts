@@ -54,6 +54,7 @@ export interface MatchState {
   ring: RingState;
   planes: Record<PlayerSlot, PlaneState>;
   bullets: BulletState[];
+  nextBulletId: number;
   tick: number;
 }
 

@@ -34,6 +34,7 @@ export function createInitialMatchState(config: GameConfig): MatchState {
       b: makePlane('b', config),
     },
     bullets: [],
+    nextBulletId: 1,
     tick: 0,
   };
 }

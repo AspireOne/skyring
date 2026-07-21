@@ -29,6 +29,7 @@ export function stepPlane(
   dt: number,
   config: GameConfig,
 ): void {
+  updateWeaponState(plane, dt, config);
   updateFlightSpeed(plane, input, dt, config);
 
   const rot = toQuaternion(plane.rot, _rot);
@@ -41,6 +42,18 @@ export function stepPlane(
 
   alignVelocity(plane, rot, dt, config);
   integratePosition(plane, dt);
+}
+
+function updateWeaponState(
+  plane: PlaneState,
+  dt: number,
+  config: GameConfig,
+): void {
+  plane.fireCooldownTicks = Math.max(0, plane.fireCooldownTicks - 1);
+  plane.ammo = Math.min(
+    config.AMMO_MAX,
+    plane.ammo + config.AMMO_REGEN_PER_SEC * dt,
+  );
 }
 
 function updateFlightSpeed(

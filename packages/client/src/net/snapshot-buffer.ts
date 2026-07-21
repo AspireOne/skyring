@@ -3,6 +3,7 @@ import { Quaternion, Vector3 } from 'three';
 import type {
   MatchPhase,
   PlayerScores,
+  PlayerSlot,
   Quat,
   RingState,
   SnapshotMessage,
@@ -13,14 +14,21 @@ import type {
 const MAX_BUFFER_MS = 1200;
 const MIN_KEPT = 2;
 
-interface InterpolatedPlane {
+export interface RenderPlane {
   pos: Vec3;
   rot: Quat;
 }
 
+export interface RenderBullet {
+  id: number;
+  owner: PlayerSlot;
+  pos: Vec3;
+}
+
 export interface RenderView {
-  a: InterpolatedPlane;
-  b: InterpolatedPlane;
+  a: RenderPlane;
+  b: RenderPlane;
+  bullets: RenderBullet[];
   phase: MatchPhase;
   ring: RingState;
   scores: PlayerScores;
@@ -112,6 +120,7 @@ function viewFrom(
   return {
     a: interpolatePlane(s0, s1, 'a', t),
     b: interpolatePlane(s0, s1, 'b', t),
+    bullets: interpolateBullets(s0, s1, t),
     phase: s1.state.phase,
     ring: s1.state.ring,
     scores: s1.state.scores,
@@ -124,7 +133,7 @@ function interpolatePlane(
   s1: SnapshotMessage,
   slot: 'a' | 'b',
   t: number,
-): InterpolatedPlane {
+): RenderPlane {
   const p0 = s0.state.planes[slot];
   const p1 = s1.state.planes[slot];
   if (t <= 0) {
@@ -136,6 +145,28 @@ function interpolatePlane(
     pos: [pos.x, pos.y, pos.z],
     rot: [rot.x, rot.y, rot.z, rot.w],
   };
+}
+
+function interpolateBullets(
+  s0: SnapshotMessage,
+  s1: SnapshotMessage,
+  t: number,
+): RenderBullet[] {
+  const previous = new Map(
+    s0.state.bullets.map((bullet) => [bullet.id, bullet]),
+  );
+  return s1.state.bullets.map((bullet) => {
+    const before = previous.get(bullet.id);
+    if (!before || t <= 0) {
+      return { id: bullet.id, owner: bullet.owner, pos: [...bullet.pos] };
+    }
+    const pos = _v0.set(...before.pos).lerp(_v1.set(...bullet.pos), t);
+    return {
+      id: bullet.id,
+      owner: bullet.owner,
+      pos: [pos.x, pos.y, pos.z],
+    };
+  });
 }
 
 const _v0 = new Vector3();

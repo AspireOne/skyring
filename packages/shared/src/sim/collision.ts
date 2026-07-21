@@ -1,10 +1,16 @@
 import { Vector3 } from 'three';
 
-import { type GameConfig } from '../constants.js';
+import { type GameConfig, secondsToTicks } from '../constants.js';
 import { fromVector3, toVector3 } from '../math.js';
 
 import type { BounceSurface, GameEvent } from '../messages.js';
-import type { PlaneState, PlayerSlot } from '../types.js';
+import type { Rng } from '../rng.js';
+import type {
+  BulletState,
+  MatchState,
+  PlaneState,
+  PlayerSlot,
+} from '../types.js';
 
 /**
  * Springy arena resolution (GAME.md §6, DECISIONS D008). Planes bounce off the
@@ -88,6 +94,86 @@ export function resolvePlanePlane(
   emitBounce(events, 'b', 'plane', posB);
 }
 
+/**
+ * Swept projectile-versus-opponent collision. Hits are gathered before any
+ * consequence is applied so simultaneous mutual shots cannot suppress one
+ * another through array mutation or processing order (GAME-5-MUTUAL-HIT).
+ */
+export function resolveBulletHits(
+  state: MatchState,
+  config: GameConfig,
+  rng: Rng,
+  events: GameEvent[],
+): void {
+  const hits: Array<{ bullet: BulletState; victim: PlayerSlot }> = [];
+  for (const bullet of state.bullets) {
+    const victim: PlayerSlot = bullet.owner === 'a' ? 'b' : 'a';
+    if (segmentHitsSphere(bullet, state.planes[victim], config)) {
+      hits.push({ bullet, victim });
+    }
+  }
+  if (hits.length === 0) {
+    return;
+  }
+
+  const consumed = new Set(hits.map(({ bullet }) => bullet.id));
+  state.bullets = state.bullets.filter((bullet) => !consumed.has(bullet.id));
+
+  for (const { bullet, victim } of hits) {
+    const direction = toVector3(bullet.vel, _bulletDirection).normalize();
+    const plane = state.planes[victim];
+    const velocity = toVector3(plane.vel, _victimVelocity).addScaledVector(
+      direction,
+      config.HIT_IMPULSE,
+    );
+    plane.vel = fromVector3(velocity);
+    plane.stumbleTicksRemaining = secondsToTicks(
+      config.STUMBLE_DURATION,
+      config.SIM_HZ,
+    );
+    plane.stumbleAngularVelocity = randomSpin(rng, config);
+    events.push({
+      kind: 'hit',
+      shooter: bullet.owner,
+      victim,
+      pos: [...bullet.pos],
+      dir: fromVector3(direction),
+    });
+    events.push({ kind: 'stumble', slot: victim });
+  }
+}
+
+function segmentHitsSphere(
+  bullet: BulletState,
+  plane: PlaneState,
+  config: GameConfig,
+): boolean {
+  const start = toVector3(bullet.previousPos, _segmentStart);
+  const segment = toVector3(bullet.pos, _segment).sub(start);
+  const lengthSquared = segment.lengthSq();
+  const towardCenter = toVector3(plane.pos, _centerDelta).sub(start);
+  const t =
+    lengthSquared > EPSILON
+      ? Math.max(0, Math.min(1, towardCenter.dot(segment) / lengthSquared))
+      : 0;
+  const closest = _closest.copy(start).addScaledVector(segment, t);
+  return (
+    closest.distanceToSquared(toVector3(plane.pos, _planeCenter)) <=
+    config.PLANE_HIT_RADIUS * config.PLANE_HIT_RADIUS
+  );
+}
+
+function randomSpin(rng: Rng, config: GameConfig): [number, number, number] {
+  const y = rng.range(-1, 1);
+  const azimuth = rng.range(0, Math.PI * 2);
+  const horizontal = Math.sqrt(Math.max(0, 1 - y * y));
+  return [
+    Math.cos(azimuth) * horizontal * config.STUMBLE_SPIN,
+    y * config.STUMBLE_SPIN,
+    Math.sin(azimuth) * horizontal * config.STUMBLE_SPIN,
+  ];
+}
+
 function emitBounce(
   events: GameEvent[],
   slot: PlayerSlot,
@@ -104,3 +190,10 @@ const _vel = new Vector3();
 const _velB = new Vector3();
 const _n = new Vector3();
 const _rel = new Vector3();
+const _bulletDirection = new Vector3();
+const _victimVelocity = new Vector3();
+const _segmentStart = new Vector3();
+const _segment = new Vector3();
+const _centerDelta = new Vector3();
+const _closest = new Vector3();
+const _planeCenter = new Vector3();

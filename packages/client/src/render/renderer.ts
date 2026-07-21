@@ -21,7 +21,13 @@ import {
 
 import type { RingStatus } from '../hud/hud-model.js';
 import type { RenderView } from '../net/snapshot-buffer.js';
-import type { GameConfig, PlayerSlot, RingState } from '@skyring/shared';
+import type {
+  GameConfig,
+  GameEvent,
+  PlayerSlot,
+  RingState,
+  Vec3,
+} from '@skyring/shared';
 
 const SLOT_COLORS: Record<PlayerSlot, number> = {
   a: 0x4cc9f0, // cyan
@@ -59,6 +65,15 @@ export class Renderer {
   private readonly ringFill: Mesh;
   private readonly ringBands: Mesh;
   private readonly ringMarker: Mesh;
+  private readonly bulletGeometry = new SphereGeometry(1.4, 8, 6);
+  private readonly bulletMaterials: Record<PlayerSlot, MeshBasicMaterial>;
+  private readonly bulletMeshes = new Map<number, Mesh>();
+  private readonly effectGeometry = new SphereGeometry(1, 10, 8);
+  private readonly effects: Array<{
+    mesh: Mesh;
+    bornAt: number;
+    expiresAt: number;
+  }> = [];
   private readonly camTarget = new Vector3();
   private localSlot: PlayerSlot = 'a';
   private firstFrameDone = false;
@@ -90,6 +105,10 @@ export class Renderer {
       a: this.addPlane('a'),
       b: this.addPlane('b'),
     };
+    this.bulletMaterials = {
+      a: new MeshBasicMaterial({ color: SLOT_COLORS.a }),
+      b: new MeshBasicMaterial({ color: SLOT_COLORS.b }),
+    };
 
     const ring = this.buildRing();
     this.ring = ring.group;
@@ -109,7 +128,25 @@ export class Renderer {
       group.position.set(pos[0], pos[1], pos[2]);
       group.quaternion.set(rot[0], rot[1], rot[2], rot[3]);
     }
+    this.syncBullets(view);
     this.updateCamera();
+  }
+
+  handleEvents(events: readonly GameEvent[]): void {
+    for (const event of events) {
+      switch (event.kind) {
+        case 'hit':
+          this.spawnBurst(event.pos, 0xffffff, 260);
+          break;
+        case 'bounce':
+          this.spawnBurst(event.pos, SLOT_COLORS[event.slot], 180);
+          break;
+        case 'ringTeleport':
+        case 'stumble':
+        case 'phaseChange':
+          break;
+      }
+    }
   }
 
   updateRing(ring: RingState, status: RingStatus, warning: boolean): void {
@@ -135,6 +172,7 @@ export class Renderer {
   }
 
   render(): void {
+    this.updateEffects();
     this.renderer.render(this.scene, this.camera);
     if (!this.firstFrameDone) {
       this.firstFrameDone = true;
@@ -149,8 +187,77 @@ export class Renderer {
   }
 
   dispose(): void {
+    for (const mesh of this.bulletMeshes.values()) {
+      this.scene.remove(mesh);
+    }
+    for (const effect of this.effects) {
+      this.scene.remove(effect.mesh);
+      (effect.mesh.material as MeshBasicMaterial).dispose();
+    }
+    this.bulletGeometry.dispose();
+    this.effectGeometry.dispose();
+    this.bulletMaterials.a.dispose();
+    this.bulletMaterials.b.dispose();
     this.renderer.dispose();
     this.canvas.remove();
+  }
+
+  private syncBullets(view: RenderView): void {
+    const live = new Set<number>();
+    for (const bullet of view.bullets) {
+      live.add(bullet.id);
+      let mesh = this.bulletMeshes.get(bullet.id);
+      if (!mesh) {
+        mesh = new Mesh(
+          this.bulletGeometry,
+          this.bulletMaterials[bullet.owner],
+        );
+        this.bulletMeshes.set(bullet.id, mesh);
+        this.scene.add(mesh);
+        this.spawnBurst(bullet.pos, SLOT_COLORS[bullet.owner], 90);
+      }
+      mesh.position.set(...bullet.pos);
+    }
+
+    for (const [id, mesh] of this.bulletMeshes) {
+      if (!live.has(id)) {
+        this.scene.remove(mesh);
+        this.bulletMeshes.delete(id);
+      }
+    }
+  }
+
+  private spawnBurst(pos: Vec3, color: number, lifetimeMs: number): void {
+    const material = new MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false,
+    });
+    const mesh = new Mesh(this.effectGeometry, material);
+    mesh.position.set(...pos);
+    this.scene.add(mesh);
+    const bornAt = performance.now();
+    this.effects.push({ mesh, bornAt, expiresAt: bornAt + lifetimeMs });
+  }
+
+  private updateEffects(): void {
+    const now = performance.now();
+    let kept = 0;
+    for (const effect of this.effects) {
+      if (now >= effect.expiresAt) {
+        this.scene.remove(effect.mesh);
+        (effect.mesh.material as MeshBasicMaterial).dispose();
+        continue;
+      }
+      const progress =
+        (now - effect.bornAt) / (effect.expiresAt - effect.bornAt);
+      effect.mesh.scale.setScalar(1 + progress * 5);
+      (effect.mesh.material as MeshBasicMaterial).opacity = 1 - progress;
+      this.effects[kept] = effect;
+      kept += 1;
+    }
+    this.effects.length = kept;
   }
 
   private updateCamera(): void {

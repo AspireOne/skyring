@@ -128,6 +128,42 @@ canvas {
   animation: hud-pulse 0.7s ease-in-out infinite;
 }
 
+.hud__ammo {
+  position: absolute;
+  bottom: 58px;
+  left: 24px;
+  width: min(260px, calc(100vw - 48px));
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: #cfe7ff;
+  background: rgba(7, 17, 31, 0.72);
+}
+
+.hud__ammo-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.hud__ammo-track {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(207, 231, 255, 0.16);
+}
+
+.hud__ammo-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4cc9f0, #59f5a6);
+  transform-origin: left center;
+  transition: transform 80ms linear;
+}
+
 .hud__result {
   position: absolute;
   inset: 0;

@@ -5,11 +5,10 @@ milestone, verification result, decision, known issue, or next action changes.
 
 ## Current position
 
-- **Active milestone:** Milestone 5 — gun, knockback, stumble, prediction, reconciliation.
-- **Milestone 4 is complete and verified** (ring, scoring, HUD, full lifecycle). One M4
-  polish item is intentionally deferred to a browser pass: a _dedicated_ win/tie result
-  browser journey (see Known issues). Win/tie/sudden-death are fully covered at the unit
-  and real-WebSocket integration layers today.
+- **Active milestone:** Milestone 6 — models, effects, audio, readability, and tuning.
+- **Milestone 5 is complete and verified** (gun, knockback, stumble, local prediction,
+  reconciliation/error smoothing, ammo HUD/tracers, network adversity, and deterministic
+  two-browser combat).
 - **Governing decisions:** `DECISIONS.md` D001–D011.
 
 ## Milestones
@@ -18,7 +17,7 @@ milestone, verification result, decision, known issue, or next action changes.
 - [x] 2. Connect, handshake, clock sync, and matchmaking
 - [x] 3. Authoritative flight, boundaries, and remote interpolation
 - [x] 4. Ring, scoring, HUD, and match lifecycle
-- [ ] 5. Gun, knockback, stumble, prediction, and reconciliation
+- [x] 5. Gun, knockback, stumble, prediction, and reconciliation
 - [ ] 6. Models, effects, audio, readability, and tuning
 - [ ] 7. Deployment, soak, production smoke, and real-internet playtest
 
@@ -37,14 +36,38 @@ milestone, verification result, decision, known issue, or next action changes.
 
 ## Latest verification
 
-Milestone 4 verified on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
+Milestone 5 verified on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
 
-- `pnpm verify` — passed: typecheck, ESLint, Knip, 128 unit tests, production build.
-- `pnpm test:integration` — passed (17 tests): matchmaking + flight, plus lifecycle over
-  the wire — regulation win/lose at time-up, tie → sudden-death phase, and sudden-death
-  ends on the first point — all via the test-only prescribed-scenario hook.
-- `pnpm test:e2e` — passed (2 journeys): solo connect/queue, and the two-browser flight
-  journey now also asserting the HUD (timer + score) renders from authoritative state.
+- `pnpm verify` — passed: typecheck, ESLint, Knip, 150 unit tests, production build.
+- `pnpm test:integration` — passed (18 tests), including authoritative mutual combat over
+  real WebSockets with input acknowledgement, ammo use, hit impulses, and stumble.
+- `pnpm test:network` — passed (1 deterministic latency/jitter/25-tick-stall matrix):
+  prediction stayed finite/responsive, buffers remained bounded, and final ack converged.
+- `pnpm test:e2e` — passed (3 Chromium journeys): solo connect/queue, two-browser flight,
+  and deterministic two-browser combat demonstrating predicted tracers, authoritative
+  hit/stumble feedback, ammo spend, and regeneration without browser console errors.
+
+### What Milestone 5 added
+
+- **shared sim:** `sim/bullet.ts` owns projectile spawn/travel/expiry and atomic firing
+  consequences (ammo, cooldown, recoil). `stepPlane` owns weapon upkeep. Swept
+  projectile→opponent collision applies seeded authoritative impulse/stumble, consumes
+  once, and gathers hits before consequences so simultaneous mutual hits are symmetric.
+  Match-owned monotonic bullet ids plus `MAX_BULLETS` keep projectile state unique/bounded.
+- **client netcode:** `net/local-prediction.ts` predicts only the local plane and its own
+  recoil/tracers through shared sim helpers. It retains a bounded unacked input ring,
+  rebuilds from each recipient-specific `ackSeq` snapshot, replays the remainder in order,
+  eases corrections below `PREDICTION_SNAP_DISTANCE`, and snaps large corrections.
+  Remote planes/projectiles remain authoritative and interpolated.
+- **presentation:** authoritative ammo HUD/energy bar, visible per-player tracers, predicted
+  muzzle bursts, hit/bounce bursts, and read-only combat diagnostics for browser evidence.
+- **verification:** projectile/fire/collision/scoring-tick examples; full reconciliation and
+  smoothing suite; real-WebSocket mutual combat; explicit `test:network` fault lane; and a
+  two-context Playwright combat journey isolated by room code.
+
+### Milestone 4 verification (prior)
+
+Milestone 4 passed 128 unit, 17 integration, and 2 Playwright tests on 2026-07-21.
 
 ### What Milestone 4 added
 
@@ -71,8 +94,10 @@ Milestone 4 verified on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
 at/above epsilon), `GAME-9-KNOCK-OUT`, ring dwell/warning/teleport, `pickRingCenter`
 termination, `GAME-3` regulation win/lose (unit + integration), `GAME-8-SUDDEN-DEATH`
 (enter on tie + first-point end + dead-center-tie-does-not-end; unit + integration),
-`GAME-9-DISCONNECT` (integration). IDs are currently expressed as test-name prefixes; a
-consolidated traceability matrix file is still TODO (see Known issues).
+`GAME-9-DISCONNECT` (integration), `GAME-5-MUTUAL-HIT` (unit + integration),
+`GAME-9-KNOCKED-INTO-RING`, `GAME-9-SHOOT-WHILE-STUMBLING`, `GAME-9-OUT-OF-AMMO`, and
+`IMPL-4.4-RECONCILIATION`. IDs are currently expressed as test-name prefixes; a
+consolidated traceability matrix file is still TODO (clear in Milestone 6).
 
 ### What Milestone 3 added
 
@@ -110,11 +135,10 @@ W/S throttle · ↑/↓ pitch · ←/→ roll · A/D yaw · Space fire.
   `config.ts` (server URL + room from query), and a `main.ts` that connects and shows
   matchmaking status while keeping the cube smoke scene.
 
-### Notes / deviations
+### Historical Milestone 2 notes / deviations
 
-- The `Match.step()` loop currently only advances `tick` and broadcasts snapshots; the
-  authoritative `stepMatch` (flight/ring/gun/lifecycle) lands across Milestones 3–5. The
-  input buffer and `ackSeq` plumbing already exist so those milestones slot in cleanly.
+- The initial `Match.step()` loop only advanced `tick` and broadcast snapshots; the full
+  authoritative flight/ring/gun/lifecycle composition landed across Milestones 3–5.
 - Client clock-sync cadence constants are local to `net-client.ts` (they never cross the
   wire or affect authority), rather than in the shared match config.
 - `SPAWN_SEPARATION` (250) was added to `constants.ts` so spawn geometry is a tunable,
@@ -122,13 +146,6 @@ W/S throttle · ↑/↓ pitch · ←/→ roll · A/D yaw · Space fire.
 
 ## Known issues / limitations
 
-- **No gun/knockback/stumble-from-hits yet (Milestone 5).** `stepPlane` already integrates
-  authoritative stumble state and `PlaneState` carries `ammo`/`fireCooldownTicks`, so the
-  gun slots into the existing per-tick order and snapshot shape cleanly.
-- **No client-side prediction yet (deferred to Milestone 5).** The local plane renders
-  from interpolated authoritative snapshots and lags input by ~`INTERP_DELAY_MS` + latency
-  by design. `NetClient` already assigns monotonic input `seq` and the server acks via
-  `snapshot.ackSeq`, so prediction/reconciliation has the plumbing it needs.
 - **Dedicated win/tie _browser_ journey is TODO** (TESTING §9 journey 5). Win/tie/
   sudden-death are covered deterministically at the unit and real-WebSocket integration
   layers; a browser version needs a short-match server (e.g. env-configurable
@@ -136,23 +153,33 @@ W/S throttle · ↑/↓ pitch · ←/→ roll · A/D yaw · Space fire.
   server entry) to finish quickly.
 - **Traceability matrix file is TODO.** Requirement IDs currently live as test-name
   prefixes (grep-able); TESTING §3 wants a consolidated matrix. Low effort, do during M6.
-- HUD ammo meter not shown yet (ammo is static/full until M5).
 - Production glTF assets deferred to Milestone 6; planes are placeholder dart primitives.
 
 ## Next action
 
-Milestone 5 — gun, knockback, stumble, prediction, reconciliation. See the detailed
-handoff at the bottom of this file (added for the agent transition).
+Milestone 6 — replace placeholders with licensed glTF planes; complete effects/audio,
+readability/responsive HUD, asset/license validation, dedicated win/tie browser journeys,
+the consolidated requirement matrix, tuning, and structured playtest evidence.
 
 ---
 
-## Agent handoff — starting Milestone 5
+## Agent handoff — starting Milestone 6
 
-Milestones 1–4 are complete, verified, and committed. The repo is green:
-`pnpm verify` (128 unit), `pnpm test:integration` (17), `pnpm test:e2e` (2). Work through
-the remaining milestones (5, 6, 7) in order per `IMPLEMENTATION.md` §16 and `TESTING.md`
-§13, committing per milestone with a passing verify + the milestone's integration/browser
-gates. Keep this file updated as you go.
+Milestones 1–5 are complete and verified. The next vertical slice is content/juice and
+readability, not new authority: keep all model geometry/audio/effects presentation-only.
+Use permissively licensed glTF planes with `public/assets/CREDITS.md` and automated asset
+validation; add event-driven sound/teleport/stumble feedback; make the HUD robust at the
+supported viewport matrix; and tune only through `shared/constants.ts`.
+
+Two inherited acceptance gaps must close in M6: dedicated browser win/tie→sudden-death
+journeys via a short deterministic test server, and a consolidated traceability matrix.
+Finish with asset/license checks, browser console/network cleanliness, responsive layout
+checks, and a recorded structured playtest. Then commit M6 green before starting ship work.
+
+### Historical Milestone 5 implementation plan (completed)
+
+The plan below was the source handoff for Milestone 5 and is retained as implementation
+history. Its items are complete; the current state and verification counts are above.
 
 ### Architecture you're inheriting (read these first)
 

@@ -1,4 +1,8 @@
-import { DEFAULT_GAME_CONFIG, type GameConfig } from '@skyring/shared';
+import {
+  DEFAULT_GAME_CONFIG,
+  type GameConfig,
+  type GameEventKind,
+} from '@skyring/shared';
 
 import { queueRequestFromLocation, serverWsUrl } from '../config.js';
 import { projectHud, ringStatus } from '../hud/hud-model.js';
@@ -20,6 +24,13 @@ export class GameController {
   private readonly status: HTMLDivElement;
   private readonly hud: Hud;
   private config: GameConfig = DEFAULT_GAME_CONFIG;
+  private readonly eventCounts: Record<GameEventKind, number> = {
+    hit: 0,
+    bounce: 0,
+    ringTeleport: 0,
+    stumble: 0,
+    phaseChange: 0,
+  };
 
   private detachKeyboard: (() => void) | undefined;
   private inputTimer: number | undefined;
@@ -45,6 +56,12 @@ export class GameController {
       queueRequestFromLocation(window.location.search),
     );
     this.net.onUpdate = () => this.onNetUpdate();
+    this.net.onEvent = (message) => {
+      this.renderer.handleEvents(message.events);
+      for (const event of message.events) {
+        this.eventCounts[event.kind] += 1;
+      }
+    };
     this.net.onMatchEnd = (message) => this.hud.showResult(message);
   }
 
@@ -106,6 +123,16 @@ export class GameController {
         phase: view.phase,
         tick: view.tick,
         localPos: view[slot].pos,
+        localAmmo:
+          this.net.latestSnapshot?.state.planes[slot].ammo ??
+          this.config.AMMO_MAX,
+        localStumbleTicks:
+          this.net.latestSnapshot?.state.planes[slot].stumbleTicksRemaining ??
+          0,
+        bulletCount: view.bullets.length,
+        scores: this.net.latestSnapshot?.state.scores ?? { a: 0, b: 0 },
+        ringWarning: this.net.latestSnapshot?.state.ring.warning ?? false,
+        eventCounts: { ...this.eventCounts },
       };
     }
     const snapshot = this.net.latestSnapshot;

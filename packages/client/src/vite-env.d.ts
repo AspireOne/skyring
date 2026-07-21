@@ -14,5 +14,14 @@ interface Window {
     phase: string;
     tick: number;
     localPos: [number, number, number];
+    localAmmo: number;
+    localStumbleTicks: number;
+    bulletCount: number;
+    scores: { a: number; b: number };
+    ringWarning: boolean;
+    eventCounts: Record<
+      'hit' | 'bounce' | 'ringTeleport' | 'stumble' | 'phaseChange',
+      number
+    >;
   };
 }

@@ -2,9 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import { makePlaneState } from '../../../../tests/support/sim-builders.js';
 import { DEFAULT_GAME_CONFIG } from '../constants.js';
-import { resolvePlaneBoundaries, resolvePlanePlane } from './collision.js';
+import { createRng } from '../rng.js';
+import {
+  resolveBulletHits,
+  resolvePlaneBoundaries,
+  resolvePlanePlane,
+} from './collision.js';
+import { createInitialMatchState } from './state.js';
 
 import type { GameEvent } from '../messages.js';
+import type { BulletState, MatchState, PlayerSlot } from '../types.js';
 
 const config = DEFAULT_GAME_CONFIG;
 const r = config.PLANE_COLLISION_RADIUS;
@@ -107,3 +114,78 @@ describe('resolvePlanePlane', () => {
     expect(events).toHaveLength(0);
   });
 });
+
+describe('resolveBulletHits', () => {
+  it('uses a swept segment, applies one directional impulse, consumes once, and emits feedback', () => {
+    const state = collisionState();
+    state.planes.b.pos = [0, 150, 0];
+    state.bullets = [bullet('a', [0, 150, 20], [0, 150, -20], [0, 0, -400])];
+    const events: GameEvent[] = [];
+
+    resolveBulletHits(state, config, createRng(5), events);
+
+    expect(state.bullets).toHaveLength(0);
+    expect(state.planes.b.vel[2]).toBeCloseTo(-config.HIT_IMPULSE, 8);
+    expect(state.planes.b.stumbleTicksRemaining).toBeGreaterThan(0);
+    expect(events).toContainEqual(
+      expect.objectContaining({ kind: 'hit', shooter: 'a', victim: 'b' }),
+    );
+    expect(events).toContainEqual({ kind: 'stumble', slot: 'b' });
+
+    resolveBulletHits(state, config, createRng(5), events);
+    expect(state.planes.b.vel[2]).toBeCloseTo(-config.HIT_IMPULSE, 8);
+  });
+
+  it('never lets a projectile hit its owner', () => {
+    const state = collisionState();
+    state.planes.a.pos = [0, 150, 0];
+    state.planes.b.pos = [500, 150, 0];
+    state.bullets = [bullet('a', [0, 150, 20], [0, 150, -20], [0, 0, -400])];
+
+    resolveBulletHits(state, config, createRng(1), []);
+    expect(state.bullets).toHaveLength(1);
+    expect(state.planes.a.stumbleTicksRemaining).toBe(0);
+  });
+
+  it('GAME-5-MUTUAL-HIT: simultaneous opposing hits affect both planes regardless of bullet order', () => {
+    const run = (reversed: boolean): MatchState => {
+      const state = collisionState();
+      state.planes.a.pos = [-50, 150, 0];
+      state.planes.b.pos = [50, 150, 0];
+      const shots = [
+        bullet('a', [50, 150, 20], [50, 150, -20], [0, 0, -400], 1),
+        bullet('b', [-50, 150, -20], [-50, 150, 20], [0, 0, 400], 2),
+      ];
+      state.bullets = reversed ? shots.reverse() : shots;
+      resolveBulletHits(state, config, createRng(9), []);
+      return state;
+    };
+
+    const forward = run(false);
+    const reversed = run(true);
+    for (const state of [forward, reversed]) {
+      expect(state.bullets).toHaveLength(0);
+      expect(state.planes.a.vel[2]).toBeCloseTo(config.HIT_IMPULSE, 8);
+      expect(state.planes.b.vel[2]).toBeCloseTo(-config.HIT_IMPULSE, 8);
+      expect(state.planes.a.stumbleTicksRemaining).toBeGreaterThan(0);
+      expect(state.planes.b.stumbleTicksRemaining).toBeGreaterThan(0);
+    }
+  });
+});
+
+function collisionState(): MatchState {
+  const state = createInitialMatchState(config);
+  state.planes.a.vel = [0, 0, 0];
+  state.planes.b.vel = [0, 0, 0];
+  return state;
+}
+
+function bullet(
+  owner: PlayerSlot,
+  previousPos: [number, number, number],
+  pos: [number, number, number],
+  vel: [number, number, number],
+  id = 1,
+): BulletState {
+  return { id, owner, previousPos, pos, vel, lifetimeTicksRemaining: 10 };
+}

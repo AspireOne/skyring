@@ -54,6 +54,17 @@ describe('projectHud', () => {
     expect(model.timeLabel).toBe('1:30');
     expect(model.suddenDeath).toBe(false);
     expect(model.countdown).toBeNull();
+    expect(model.ammo).toBe(config.AMMO_MAX);
+    expect(model.ammoFraction).toBe(1);
+  });
+
+  it('projects local ammo as a clamped energy fraction', () => {
+    const state = playing();
+    state.planes.b.ammo = config.AMMO_MAX / 4;
+    const model = projectHud(state, 'b', config);
+    expect(model.ammo).toBe(config.AMMO_MAX / 4);
+    expect(model.ammoMax).toBe(config.AMMO_MAX);
+    expect(model.ammoFraction).toBe(0.25);
   });
 
   it('mirrors scores for the other slot', () => {

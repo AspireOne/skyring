@@ -19,6 +19,7 @@ export interface GameConfig {
   readonly PLANE_COLLISION_RESTITUTION: number;
   readonly BULLET_SPEED: number;
   readonly BULLET_LIFETIME: number;
+  readonly MAX_BULLETS: number;
   readonly FIRE_COOLDOWN: number;
   readonly AMMO_MAX: number;
   readonly AMMO_REGEN_PER_SEC: number;
@@ -28,6 +29,9 @@ export interface GameConfig {
   readonly RECOIL_IMPULSE: number;
   readonly STUMBLE_DURATION: number;
   readonly STUMBLE_SPIN: number;
+  readonly PREDICTION_MAX_INPUTS: number;
+  readonly PREDICTION_SMOOTH_TIME: number;
+  readonly PREDICTION_SNAP_DISTANCE: number;
   readonly RING_RADIUS: number;
   readonly RING_DWELL: number;
   readonly RING_WARNING: number;
@@ -60,6 +64,7 @@ export const DEFAULT_GAME_CONFIG: Readonly<GameConfig> = Object.freeze({
   PLANE_COLLISION_RESTITUTION: 0.9,
   BULLET_SPEED: 400,
   BULLET_LIFETIME: 1.2,
+  MAX_BULLETS: 64,
   FIRE_COOLDOWN: 0.12,
   AMMO_MAX: 20,
   AMMO_REGEN_PER_SEC: 4,
@@ -69,6 +74,9 @@ export const DEFAULT_GAME_CONFIG: Readonly<GameConfig> = Object.freeze({
   RECOIL_IMPULSE: 25,
   STUMBLE_DURATION: 0.6,
   STUMBLE_SPIN: 4,
+  PREDICTION_MAX_INPUTS: 240,
+  PREDICTION_SMOOTH_TIME: 0.1,
+  PREDICTION_SNAP_DISTANCE: 30,
   RING_RADIUS: 90,
   RING_DWELL: 22,
   RING_WARNING: 4,
@@ -99,6 +107,7 @@ const POSITIVE_KEYS = [
   'PLANE_COLLISION_RADIUS',
   'BULLET_SPEED',
   'BULLET_LIFETIME',
+  'MAX_BULLETS',
   'FIRE_COOLDOWN',
   'AMMO_MAX',
   'AMMO_REGEN_PER_SEC',
@@ -108,6 +117,9 @@ const POSITIVE_KEYS = [
   'RECOIL_IMPULSE',
   'STUMBLE_DURATION',
   'STUMBLE_SPIN',
+  'PREDICTION_MAX_INPUTS',
+  'PREDICTION_SMOOTH_TIME',
+  'PREDICTION_SNAP_DISTANCE',
   'RING_RADIUS',
   'RING_DWELL',
   'RING_WARNING',
@@ -146,9 +158,13 @@ function validateGameConfig(config: GameConfig): void {
 
   if (
     !Number.isInteger(config.SIM_HZ) ||
-    !Number.isInteger(config.SNAPSHOT_HZ)
+    !Number.isInteger(config.SNAPSHOT_HZ) ||
+    !Number.isInteger(config.MAX_BULLETS) ||
+    !Number.isInteger(config.PREDICTION_MAX_INPUTS)
   ) {
-    throw new RangeError('SIM_HZ and SNAPSHOT_HZ must be integers.');
+    throw new RangeError(
+      'SIM_HZ, SNAPSHOT_HZ, MAX_BULLETS, and PREDICTION_MAX_INPUTS must be integers.',
+    );
   }
 
   if (config.SNAPSHOT_HZ > config.SIM_HZ) {
