@@ -32,6 +32,17 @@ test('two players pair, fly, and steer their own planes', async ({
     'matched',
   );
 
+  // The E2E server deliberately differs from the bundled defaults. Both the
+  // input cadence diagnostic and rendered arena must use matchFound.constants.
+  await Promise.all(
+    [pageA, pageB].map(async (page) => {
+      await expect(page.locator('#app')).toHaveAttribute('data-sim-hz', '30');
+      const canvas = page.locator('[data-testid="scene-canvas"]');
+      await expect(canvas).toHaveAttribute('data-dome-radius', '680');
+      await expect(canvas).toHaveAttribute('data-ground-y', '10');
+    }),
+  );
+
   // Wait out the countdown until authoritative play begins.
   await expect(pageA.locator('#app')).toHaveAttribute(
     'data-match-phase',

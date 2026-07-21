@@ -46,7 +46,7 @@ Severities use:
 
 ## B002 — The client does not consistently apply the authoritative match config
 
-- **Status:** confirmed by static construction/configuration trace
+- **Status:** fixed and verified
 - **Severity:** medium
 - **Location:** `packages/client/src/game/game-controller.ts` (constructor,
   `onNetUpdate`, and `startInput`) and `packages/client/src/render/renderer.ts`
@@ -70,6 +70,13 @@ Severities use:
 - **Suggested fix:** initialize or reconfigure config-dependent rendering and input
   systems from `matchFound.constants`. Do not retain gameplay or arena timing from the
   client's bundled defaults once the effective config arrives.
+- **Resolution:** `GameController` now applies `matchFound.constants` once to the input
+  cadence, diagnostics, HUD, prediction, and renderer. The renderer delegates its
+  config-dependent arena shell to `ArenaView`, which safely rebuilds the camera range,
+  fog, ground, grid, and dome while disposing replaced resources. The browser fixture
+  deliberately differs from bundled defaults (`SIM_HZ=30`, `DOME_RADIUS=680`,
+  `GROUND_Y=10`) and verifies both clients adopt those values. Verification passed with
+  `pnpm verify` and `pnpm build:e2e && pnpm test:e2e:run` (8/8).
 
 ## B003 — Client prediction drops elapsed fixed steps when its timer is delayed
 

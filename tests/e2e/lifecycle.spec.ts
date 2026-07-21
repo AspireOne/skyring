@@ -70,7 +70,7 @@ test('a regulation tie visibly enters sudden death and ends on its first score',
       page.locator('[data-testid="hud-result-score"]').textContent(),
     ),
   );
-  expect(scores.sort()).toEqual(['3.00 – 3.02', '3.02 – 3.00']);
+  expect(scores.sort()).toEqual(['3.00 – 3.03', '3.03 – 3.00']);
   expectBrowserEvidenceClean(pair.evidence);
   await pair.close();
 });

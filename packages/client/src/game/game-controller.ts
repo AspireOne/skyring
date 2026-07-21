@@ -105,8 +105,10 @@ export class GameController {
   private onNetUpdate(): void {
     this.root.dataset.netPhase = this.net.phase;
     if (this.net.phase === 'matched' && this.net.slot) {
-      if (this.net.constants) {
+      if (this.net.constants && this.config !== this.net.constants) {
         this.config = this.net.constants;
+        this.root.dataset.simHz = String(this.config.SIM_HZ);
+        this.renderer.configure(this.config);
       }
       this.renderer.setLocalSlot(this.net.slot);
       this.startInput();
@@ -120,7 +122,7 @@ export class GameController {
     }
     this.inputStarted = true;
     this.detachKeyboard = this.keyboard.attach(window);
-    const stepMs = 1000 / DEFAULT_GAME_CONFIG.SIM_HZ;
+    const stepMs = 1000 / this.config.SIM_HZ;
     this.inputTimer = window.setInterval(() => {
       if (this.net.phase === 'matched') {
         this.net.sendInput(this.keyboard.sample());

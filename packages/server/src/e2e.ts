@@ -18,7 +18,10 @@ import type { MatchContext } from './match.js';
 
 const E2E_SEED = 42;
 const config = createGameConfig({
+  SIM_HZ: 30,
   COUNTDOWN: 0.5,
+  DOME_RADIUS: 680,
+  GROUND_Y: 10,
   MATCH_DURATION: 60,
   RING_DWELL: 6,
   RING_WARNING: 2,

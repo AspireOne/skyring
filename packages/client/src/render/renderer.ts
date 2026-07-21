@@ -1,17 +1,9 @@
 import {
-  AmbientLight,
-  BackSide,
-  BoxGeometry,
   Color,
-  DirectionalLight,
   DoubleSide,
-  Fog,
-  GridHelper,
   Group,
-  HemisphereLight,
   Mesh,
   MeshBasicMaterial,
-  MeshStandardMaterial,
   PerspectiveCamera,
   Scene,
   SphereGeometry,
@@ -19,6 +11,7 @@ import {
   WebGLRenderer,
 } from 'three';
 
+import { ArenaView } from './arena.js';
 import {
   createFallbackPlane,
   disposeGroup,
@@ -67,6 +60,7 @@ export class Renderer {
   private readonly scene = new Scene();
   private readonly camera: PerspectiveCamera;
   private readonly renderer: WebGLRenderer;
+  private readonly arena: ArenaView;
   private readonly planes: Record<PlayerSlot, Group>;
   private readonly ring: Group;
   private readonly ringFill: Mesh;
@@ -107,16 +101,11 @@ export class Renderer {
       62,
       window.innerWidth / window.innerHeight,
       0.5,
-      config.DOME_RADIUS * 4,
+      1,
     );
 
     this.scene.background = new Color(0x173b5f);
-    this.scene.fog = new Fog(
-      0x173b5f,
-      config.DOME_RADIUS * 0.8,
-      config.DOME_RADIUS * 2.4,
-    );
-    this.buildArena(config);
+    this.arena = new ArenaView(this.scene, this.camera, this.canvas, config);
 
     this.planes = {
       a: this.addPlane('a'),
@@ -136,6 +125,11 @@ export class Renderer {
 
   setLocalSlot(slot: PlayerSlot): void {
     this.localSlot = slot;
+  }
+
+  /** Rebuild config-dependent presentation from the server's effective config. */
+  configure(config: GameConfig): void {
+    this.arena.configure(config);
   }
 
   update(view: RenderView): void {
@@ -215,6 +209,7 @@ export class Renderer {
   }
 
   dispose(): void {
+    this.arena.dispose();
     for (const plane of Object.values(this.planes)) {
       disposeGroup(plane);
     }
@@ -309,45 +304,6 @@ export class Renderer {
       .copy(local.position)
       .addScaledVector(forward, CAM_LOOK_AHEAD);
     this.camera.lookAt(this.camTarget);
-  }
-
-  private buildArena(config: GameConfig): void {
-    const ground = new Mesh(
-      new BoxGeometry(config.DOME_RADIUS * 4, 1, config.DOME_RADIUS * 4),
-      new MeshStandardMaterial({ color: 0x294962 }),
-    );
-    ground.position.y = config.GROUND_Y - 0.5;
-    this.scene.add(ground);
-
-    const grid = new GridHelper(config.DOME_RADIUS * 2, 40, 0x2a4a6a, 0x1b3350);
-    grid.position.y = config.GROUND_Y + 0.05;
-    this.scene.add(grid);
-
-    const dome = new Mesh(
-      new SphereGeometry(
-        config.DOME_RADIUS,
-        32,
-        16,
-        0,
-        Math.PI * 2,
-        0,
-        Math.PI / 2,
-      ),
-      new MeshStandardMaterial({
-        color: 0x2b5a8c,
-        transparent: true,
-        opacity: 0.06,
-        side: BackSide,
-        wireframe: true,
-      }),
-    );
-    this.scene.add(dome);
-
-    this.scene.add(new AmbientLight(0xb8d8f0, 1.5));
-    this.scene.add(new HemisphereLight(0xbfe7ff, 0x31465b, 2));
-    const sun = new DirectionalLight(0xffffff, 3);
-    sun.position.set(1, 2, 1);
-    this.scene.add(sun);
   }
 
   private buildRing(): {
