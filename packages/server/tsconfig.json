@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["ES2024"],
+    "types": ["node"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/server.tsbuildinfo",
+    "paths": {
+      "@skyring/shared": ["../shared/src/index.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"],
+  "references": [{ "path": "../shared" }]
+}

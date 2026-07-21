@@ -1,6 +1,22 @@
-# Plane Shooter
+# SkyRing
 
-A browser-based 3D game built with Three.js, TypeScript, and Vite.
+A 1v1 online aerial king-of-the-hill game built with Three.js, TypeScript, Node,
+and WebSockets. Players score by controlling a moving capture volume and use
+projectile knockback—never damage—to bonk one another out of position.
+
+The game is under active development. Read these documents before contributing:
+
+- [`GAME.md`](./GAME.md) — gameplay and feel.
+- [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) — architecture and milestone order.
+- [`DECISIONS.md`](./DECISIONS.md) — settled foundational choices.
+- [`TESTING.md`](./TESTING.md) — verification strategy.
+- [`PROGRESS.md`](./PROGRESS.md) — current milestone and resumable handoff.
+- [`AGENTS.md`](./AGENTS.md) — repository workflow for implementation agents.
+
+## Requirements
+
+- Node 24 or newer.
+- pnpm 11 or newer.
 
 ## Development
 
@@ -9,32 +25,22 @@ pnpm install
 pnpm dev
 ```
 
-Create a production build with `pnpm build`, then serve it locally with
-`pnpm preview`.
+The Vite client and Node server run together. The server exposes `GET /health` and
+hosts the WebSocket endpoint; gameplay protocol work begins in Milestone 2.
 
-## Code quality
-
-Run the project checks individually with:
+## Verification
 
 ```sh
-pnpm typecheck
-pnpm lint
-pnpm knip
-pnpm format:check
+pnpm verify             # typecheck, lint, Knip, unit tests, production build
+pnpm test:integration   # real HTTP/WebSocket server tests
+pnpm test:e2e           # production build plus Playwright Chromium smoke
+pnpm verify:full        # all of the above
 ```
 
-The pre-commit hook type-checks the project, reports project-wide Knip findings
-without blocking, lints staged source files, and formats and re-stages supported
-staged files. TypeScript and ESLint errors block the commit; warnings do not.
+Use `pnpm test:watch` while developing and `pnpm test:coverage` for diagnostic
+coverage. Soak tests are intentionally kept out of precommit and run explicitly with
+`pnpm test:soak` once long-running scenarios exist.
 
-TypeScript 7 provides the `tsc` binary through `@typescript/native`. The
-`typescript` dependency exposes the TypeScript 6 compatibility API required by
-typescript-eslint until TypeScript 7.1 introduces its new programmatic API.
-
----
-
-## Coding principles
-
-- Make sure cleanliness, clarity, explicitness, reliability, or just simpleness in code and functionality and design (arcihtectural etc.) is preferred over over-engineering or clever solutions.
-- Split code into files and directories, ideally encapsulated by domain.
-- Functionality and correctness should be enforced by the architecture/code itself. The architecture itself should make it, ideally, impossible for bugs or issues or error surfaces to arise.
+The pre-commit hook typechecks the workspace, reports project-wide Knip findings,
+lints staged source files, and formats supported staged files. TypeScript and ESLint
+errors block the commit; warnings do not.

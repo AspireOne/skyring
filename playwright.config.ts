@@ -1,0 +1,46 @@
+import { defineConfig, devices } from '@playwright/test';
+
+// Playwright forces colored child output; retaining NO_COLOR makes Node warn on every
+// spawned web server/worker in environments that set both variables.
+delete process.env.NO_COLOR;
+
+const clientUrl = 'http://127.0.0.1:4173';
+const serverUrl = 'http://127.0.0.1:4174';
+
+export default defineConfig({
+  testDir: './tests/e2e',
+  fullyParallel: true,
+  forbidOnly: Boolean(process.env.CI),
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
+  use: {
+    baseURL: clientUrl,
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+  webServer: [
+    {
+      command:
+        'pnpm --filter @skyring/client preview --host 127.0.0.1 --port 4173',
+      url: clientUrl,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: 'pnpm --filter @skyring/server start',
+      url: `${serverUrl}/health`,
+      env: {
+        ...process.env,
+        HOST: '127.0.0.1',
+        PORT: '4174',
+      },
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
+});

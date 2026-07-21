@@ -39,6 +39,7 @@ A single glowing ring/zone floats somewhere in the arena. It is the only place p
 - **Dwell then teleport:** the ring stays in one location for a **dwell period (~20-25 seconds)**, then **instantly teleports** to a new location elsewhere in the arena. It does not drift. Each relocation is a fresh "race to the new ring" moment.
 - **Telegraphed relocation:** the ring gives a **clear warning** (visual + audio cue, e.g. a few seconds of pulsing/countdown) before it teleports, so the move is a strategic beat both players can react to — not a random rug-pull. The _next_ location is revealed at the moment of warning so both players can start committing to the flight path.
 - **Generous but not huge:** the ring is big enough that two planes can both be inside it (that's the whole point of the contest rule below), but small enough that a good knockback can clear someone out of it.
+- **A true 3D volume:** despite the name "ring," the scoring zone is spherical. Its visuals must communicate that whole volume clearly rather than looking like a thin hoop that only counts when flown through.
 
 ### 4.1 The Contest Rule (both planes inside at once) — **Tug-of-War**
 
@@ -61,6 +62,7 @@ Your weapon is the game's signature twist. It **never damages or destroys**. It 
 - **Recoil on the shooter:** firing shoves **you** backward a little too. Blasting your rival away as you both close on the ring is a real trade — you'll drift off your own line in the process. No free shots.
 - **Limited, regenerating ammo/energy:** you can't hold the trigger forever. Shots draw from a small pool that **refills slowly on its own**. This stops the gun from becoming a zone-denial turret — it's a well-timed tool, not a wall of bullets.
 - **No consequences beyond force.** There is no bleed, no lingering damage, no kill credit. The entire consequence of being shot is: _you got moved, and you fumbled for half a second._
+- **Visible projectiles:** shots are short-lived tracers rather than instant hits. They expire at the arena boundary instead of ricocheting, keeping incoming fire readable; the planes themselves provide the game's unpredictable caroms.
 
 ---
 
@@ -68,6 +70,7 @@ Your weapon is the game's signature twist. It **never damages or destroys**. It 
 
 - **A bounded 3D volume of open sky** (with a ground/horizon for orientation and a sense of up/down).
 - **Bouncy boundaries:** the arena is enclosed by an **invisible dome**. Fly into it and you **ricochet off** — you are never hard-stopped, clamped, or teleported back. The edges obey the same springy rule as everything else, so knocking someone into a wall can bounce them back into play in unexpected ways.
+- **Bouncy plane collisions:** planes that meet physically shove and ricochet off one another. There is still no damage or bad state beyond the movement this causes.
 - **Open middle:** no obstacles are required for the core game. (Optional later: a few large soft/bouncy obstacles to bank around — but the base game is clean open sky so the ring and the two planes are always the focus.)
 - **Size:** large enough that the ring's teleport genuinely repositions the fight, small enough that you're never more than a few seconds of flight from the action.
 
@@ -101,9 +104,9 @@ These exist so the game behaves predictably in weird moments.
 - **Shooting while stumbling:** a stumbling plane cannot fire until it recovers control. You can't shoot your way out of a fumble.
 - **Out of ammo:** you simply can't fire until energy regenerates. You are never defenseless in the sense of dying — you just can't shove for a moment, so you rely on flying.
 - **Simultaneous mutual hits:** both planes get shoved and both stumble. Perfectly legal and encouraged chaos.
-- **Ricochet into the ring / off a wall into the opponent:** all bounces are "real." Emergent bank-shots and lucky caroms are a feature, not a bug — they fit the springy tone.
+- **Plane ricochet into the ring / off a wall into the opponent:** all plane bounces are "real." Emergent caroms are a feature, not a bug — they fit the springy tone. Projectiles do not bounce off the arena boundary.
 - **Stalling in the ring doing nothing while contested:** the tug-of-war rule (§4.1) means a passive plane loses the center to an active one, so camping is not a stable strategy.
-- **Disconnection:** if a player drops, the match cannot be a real 1v1 — the remaining player is informed and the match ends (no-contest or awarded; final ruling to be decided at implementation, but the match does **not** silently continue against a frozen ghost).
+- **Disconnection:** if a player drops during live play or sudden death, the remaining player is informed and awarded the match. A disconnect during the pre-match countdown ends as a no-contest. The match never silently continues against a frozen ghost.
 
 ---
 

@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": ["node", "vitest/importMeta"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "paths": {
+      "@skyring/shared": ["./packages/shared/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/**/*.test.ts",
+    "tests/**/*.test.ts",
+    "tests/**/*.spec.ts"
+  ]
+}

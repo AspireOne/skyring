@@ -1,3 +1,4 @@
+import { DEFAULT_GAME_CONFIG } from '@skyring/shared';
 import * as THREE from 'three';
 
 import './style.css';
@@ -7,6 +8,9 @@ const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) {
   throw new Error('App root was not found.');
 }
+
+app.dataset.simHz = String(DEFAULT_GAME_CONFIG.SIM_HZ);
+app.dataset.renderStatus = 'starting';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x07111f);
@@ -20,6 +24,7 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 1.5, 5);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.domElement.dataset.testid = 'scene-canvas';
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 app.append(renderer.domElement);
@@ -39,8 +44,15 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+let firstFrameRendered = false;
+
 renderer.setAnimationLoop((time) => {
   cube.rotation.x = time * 0.0004;
   cube.rotation.y = time * 0.0007;
   renderer.render(scene, camera);
+
+  if (!firstFrameRendered) {
+    firstFrameRendered = true;
+    app.dataset.renderStatus = 'ready';
+  }
 });

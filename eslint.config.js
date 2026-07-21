@@ -15,12 +15,14 @@ export default defineConfig([
   {
     ignores: [
       'node_modules/**',
-      'dist/**',
-      'build/**',
-      'coverage/**',
-      'public/**',
-      'generated/**',
-      '.vite/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/coverage/**',
+      '**/public/**',
+      '**/generated/**',
+      '**/.vite/**',
+      'playwright-report/**',
+      'test-results/**',
     ],
   },
 
@@ -39,7 +41,10 @@ export default defineConfig([
   {
     files: typeScriptFiles,
     languageOptions: {
-      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
     },
     rules: {
       '@typescript-eslint/consistent-type-imports': [
@@ -49,6 +54,82 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': [
         'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+    },
+  },
+
+  {
+    files: ['packages/client/src/**/*.ts'],
+    languageOptions: {
+      globals: globals.browser,
+    },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@skyring/server', '**/server/**'],
+              message: 'Client code must not import server code.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  {
+    files: [
+      'packages/server/**/*.ts',
+      'tests/**/*.ts',
+      '*.config.{js,ts}',
+      'eslint.config.js',
+    ],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
+    },
+  },
+
+  {
+    files: ['packages/server/src/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@skyring/client', '**/client/**'],
+              message: 'Server code must not import client code.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  {
+    files: ['packages/shared/src/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                'node:*',
+                '@skyring/client',
+                '@skyring/server',
+                '**/client/**',
+                '**/server/**',
+              ],
+              message:
+                'Shared code must remain portable between browser and server.',
+            },
+          ],
+        },
       ],
     },
   },
@@ -130,7 +211,7 @@ export default defineConfig([
   },
 
   {
-    files: ['src/**/*.ts'],
+    files: ['packages/*/src/**/*.ts'],
     plugins: {
       'check-file': checkFile,
     },
@@ -138,7 +219,7 @@ export default defineConfig([
       'check-file/filename-naming-convention': [
         'error',
         {
-          'src/**/*.ts': 'KEBAB_CASE',
+          'packages/*/src/**/*.ts': 'KEBAB_CASE',
         },
         {
           ignoreMiddleExtensions: true,
@@ -147,7 +228,7 @@ export default defineConfig([
       'check-file/folder-naming-convention': [
         'error',
         {
-          'src/**/': 'KEBAB_CASE',
+          'packages/*/src/**/': 'KEBAB_CASE',
         },
       ],
     },

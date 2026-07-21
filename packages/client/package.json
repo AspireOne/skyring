@@ -1,0 +1,15 @@
+{
+  "name": "@skyring/client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@skyring/shared": "workspace:*",
+    "three": "0.185.1"
+  }
+}

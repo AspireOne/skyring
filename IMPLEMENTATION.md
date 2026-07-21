@@ -13,7 +13,7 @@
 - §5–§12 are the detailed specs for each subsystem. Treat concrete numbers as **defaults to build against**, not sacred — every one lives in a single constants file (§5.1) and is meant to be tuned by playtesting.
 - Read [`TESTING.md`](./TESTING.md) before designing subsystem boundaries. Testability is an architectural requirement, and every milestone ships with its verification evidence rather than adding tests afterward.
 - §16 is the **build order**. Follow it. Do not build the full netcode stack on day one; earn it in milestones.
-- When a decision here is marked **[FLAG]**, it refines or goes beyond `GAME.md` and is open to the human's review — call it out in your PR, don't silently diverge further.
+- Foundational choices are recorded in [`DECISIONS.md`](./DECISIONS.md). Do not reopen them without new implementation/playtest evidence; record any replacement decision before changing course.
 - Keywords **MUST / SHOULD / MAY** carry their usual weight.
 
 ---
@@ -32,26 +32,26 @@ Five principles, in priority order. When a tradeoff appears, resolve it up this 
 
 ## 2. Technology Choices
 
-| Concern            | Choice                                                        | Why (and what was rejected)                                                                                                                                                                                                                                                                                                                                     |
-| ------------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Language           | **TypeScript** everywhere                                     | One language across client/server/shared lets us _share the simulation and types for free_. Non-negotiable given Principle 2.                                                                                                                                                                                                                                   |
-| Client rendering   | **three.js** (already present)                                | Right tool for browser 3D; already scaffolded.                                                                                                                                                                                                                                                                                                                  |
-| Client build/dev   | **Vite** (already present)                                    | Fast HMR, TS-native, already scaffolded.                                                                                                                                                                                                                                                                                                                        |
-| Server runtime     | **Node ≥24** (already the engine) + **`ws`**                  | `ws` is the minimal, battle-tested raw-WebSocket library. We want to own the tick loop, not have a framework own it.                                                                                                                                                                                                                                            |
-| Realtime transport | **WebSocket** (over TCP)                                      | See §4.1. **Rejected:** WebTransport/WebRTC (UDP-like, "more correct" for games, but browser + Node lib maturity and complexity aren't worth it for a 2-player game where prediction already hides latency). Noted as a future upgrade.                                                                                                                         |
-| Netcode framework  | **None — hand-rolled on `ws`**                                | **Rejected: Colyseus** (great rooms/state-sync, but imposes its own schema/state model and hides the tick timing we want to control) and **Socket.IO** (reconnection/fallback magic and overhead we don't need for fixed 1v1). **[FLAG]** — the one genuinely reasonable alternative is Colyseus; if hand-rolling the room/sync layer becomes a slog, escalate. |
-| Server dev loop    | **`tsx watch`**                                               | Runs TS directly with fast reload; no separate build step in dev.                                                                                                                                                                                                                                                                                               |
-| Wire format        | **JSON** now; binary path left open                           | Debuggable, trivial, fine for 2 players. Swap the encoder in `protocol.ts` for msgpack/DataView **only if** profiling demands it.                                                                                                                                                                                                                               |
-| Vector math        | **three.js math classes** (`Vector3`, `Quaternion`) in shared | Reuse in the sim what the renderer already speaks — no gl-matrix↔THREE conversion at the render boundary. The server imports only the math subset of `three` (pure JS, runs fine in Node). **Rejected: gl-matrix** (lighter, but adds an impedance mismatch on the client).                                                                                     |
-| Testing            | **Vitest**                                                    | Vite-native, TS-native, fast. The shared sim is pure → highly unit-testable (§14).                                                                                                                                                                                                                                                                              |
-| Message validation | **Hand-rolled type guards** (zod optional)                    | Validate at the protocol boundary. Keep it lean; reach for `zod` only if guards get unwieldy.                                                                                                                                                                                                                                                                   |
-| Package manager    | **pnpm workspaces** (already present)                         | Already intended (repo has `pnpm-workspace.yaml`). Enables the shared package.                                                                                                                                                                                                                                                                                  |
+| Concern            | Choice                                                        | Why (and what was rejected)                                                                                                                                                                                                                                                                                                              |
+| ------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Language           | **TypeScript** everywhere                                     | One language across client/server/shared lets us _share the simulation and types for free_. Non-negotiable given Principle 2.                                                                                                                                                                                                            |
+| Client rendering   | **three.js** (already present)                                | Right tool for browser 3D; already scaffolded.                                                                                                                                                                                                                                                                                           |
+| Client build/dev   | **Vite** (already present)                                    | Fast HMR, TS-native, already scaffolded.                                                                                                                                                                                                                                                                                                 |
+| Server runtime     | **Node ≥24** (already the engine) + **`ws`**                  | `ws` is the minimal, battle-tested raw-WebSocket library. We want to own the tick loop, not have a framework own it.                                                                                                                                                                                                                     |
+| Realtime transport | **WebSocket** (over TCP)                                      | See §4.1. **Rejected:** WebTransport/WebRTC (UDP-like, "more correct" for games, but browser + Node lib maturity and complexity aren't worth it for a 2-player game where prediction already hides latency). Noted as a future upgrade.                                                                                                  |
+| Netcode framework  | **None — hand-rolled on `ws`**                                | **Rejected: Colyseus** (great rooms/state-sync, but imposes its own schema/state model and hides the tick timing we want to control) and **Socket.IO** (reconnection/fallback magic and overhead we don't need for fixed 1v1). Reconsider only if the room/sync implementation provides concrete evidence that this choice is untenable. |
+| Server dev loop    | **`tsx watch`**                                               | Runs TS directly with fast reload; no separate build step in dev.                                                                                                                                                                                                                                                                        |
+| Wire format        | **JSON** now; binary path left open                           | Debuggable, trivial, fine for 2 players. Swap the encoder in `protocol.ts` for msgpack/DataView **only if** profiling demands it.                                                                                                                                                                                                        |
+| Vector math        | **three.js math classes** (`Vector3`, `Quaternion`) in shared | Reuse in the sim what the renderer already speaks — no gl-matrix↔THREE conversion at the render boundary. The server imports only the math subset of `three` (pure JS, runs fine in Node). **Rejected: gl-matrix** (lighter, but adds an impedance mismatch on the client).                                                              |
+| Testing            | **Vitest + Playwright**                                       | Vitest covers shared, server, and non-WebGL client logic; Playwright runs two production-built browser clients against a real server. See §14 and `TESTING.md`.                                                                                                                                                                          |
+| Message validation | **Hand-rolled type guards** (zod optional)                    | Validate at the protocol boundary. Keep it lean; reach for `zod` only if guards get unwieldy.                                                                                                                                                                                                                                            |
+| Package manager    | **pnpm workspaces** (already present)                         | Already intended (repo has `pnpm-workspace.yaml`). Enables the shared package.                                                                                                                                                                                                                                                           |
 
 ---
 
 ## 3. Repository Structure
 
-A pnpm monorepo. The current single-package scaffold migrates into `packages/client` (§3.2).
+A pnpm monorepo. The original single-package scaffold was migrated into `packages/client` during the foundation milestone (§3.2).
 
 ```
 plane-shooter/
@@ -64,7 +64,7 @@ plane-shooter/
 │  │  │  ├─ sim/
 │  │  │  │  ├─ plane.ts         # stepPlane(): flight, alignment, stumble
 │  │  │  │  ├─ bullet.ts        # stepBullets(), spawnBullet()
-│  │  │  │  ├─ collision.ts     # bullet↔plane, plane↔boundary (bounce)
+│  │  │  │  ├─ collision.ts     # bullet↔plane, plane↔plane/boundary (bounce)
 │  │  │  │  ├─ ring.ts          # dwell/teleport, scoring resolution (tug-of-war)
 │  │  │  │  └─ match.ts         # stepMatch(): orchestrates one authoritative tick
 │  │  │  ├─ protocol.ts        # message tags, encode/decode, version
@@ -97,7 +97,10 @@ plane-shooter/
 ├─ package.json                # root: orchestration scripts + shared devDeps/tooling
 ├─ eslint.config.js .prettierrc … # hoisted to root, apply to all packages
 ├─ tests/                      # integration, e2e, soak, and shared test support
+├─ AGENTS.md                    # durable implementation workflow for agents
+├─ DECISIONS.md                 # accepted design/technical decisions
 ├─ GAME.md
+├─ PROGRESS.md                  # resumable milestone and verification handoff
 ├─ TESTING.md
 └─ IMPLEMENTATION.md
 ```
@@ -112,7 +115,7 @@ plane-shooter/
 
 ### 3.2 Migration from the current scaffold (one-time, mechanical)
 
-1. Create `packages/client/`; move `src/`, `index.html`, and the Vite/client-specific config into it. The existing `src/main.ts` cube demo becomes the seed of `render/` and is replaced during Milestone 1.
+1. Create `packages/client/`; move `src/`, `index.html`, and the Vite/client-specific config into it. The existing `src/main.ts` cube demo remains the browser smoke scene until Milestone 3 replaces it with the first flyable plane.
 2. Extract shared compiler options from the root `tsconfig.json` into `tsconfig.base.json`; each package's `tsconfig.json` extends it. Client keeps `moduleResolution: "Bundler"`, `lib: [DOM…]`; server/shared use a Node-appropriate resolution and drop DOM libs.
 3. Add the `packages:` glob to `pnpm-workspace.yaml` (it currently declares none):
    ```yaml
@@ -209,7 +212,9 @@ PITCH_RATE = 1.6;
 ROLL_RATE = 2.6;
 YAW_RATE = 0.8;
 VELOCITY_ALIGN = 3.0; // 1/s: how fast velocity re-aligns to the nose
-GRAVITY = 0; // arcade sky; no gravity by default  [FLAG, refines GAME.md]
+GRAVITY = 0; // arcade sky; no gravity by default
+PLANE_COLLISION_RADIUS = 12;
+PLANE_COLLISION_RESTITUTION = 0.9;
 
 // Gun / knockback  (GAME.md §5)
 BULLET_SPEED = 400;
@@ -252,19 +257,30 @@ type Quat = [number, number, number, number]; // x,y,z,w
 
 interface PlaneState {
   pos: Vec3;
-  vel: Vec3;
+  vel: Vec3; // total world velocity, including temporary impulses
   rot: Quat;
+  flightSpeed: number; // throttle-controlled target, MIN_SPEED..MAX_SPEED
   ammo: number;
-  stumbleRemaining: number; // >0 ⇒ no control, tumbling
-  fireCooldown: number;
+  stumbleTicksRemaining: number; // >0 ⇒ no control, tumbling
+  stumbleAngularVelocity: Vec3;
+  fireCooldownTicks: number;
   inRing: boolean; // derived, but sent for HUD/clarity
   scoring: boolean; // is THIS plane currently earning points
+}
+
+interface BulletState {
+  id: number;
+  owner: 'a' | 'b';
+  previousPos: Vec3; // swept collision start for this tick
+  pos: Vec3;
+  vel: Vec3;
+  lifetimeTicksRemaining: number;
 }
 
 interface RingState {
   center: Vec3;
   radius: number;
-  timeUntilTeleport: number;
+  teleportTicksRemaining: number;
   warning: boolean; // telegraph window
   nextCenter: Vec3 | null; // revealed when warning starts (GAME.md §4)
 }
@@ -279,10 +295,11 @@ enum MatchPhase {
 
 interface MatchState {
   phase: MatchPhase;
-  timeRemaining: number; // Playing phase clock
+  phaseTicksRemaining: number; // countdown/regulation; UI derives seconds
   scores: { a: number; b: number };
   ring: RingState;
   planes: { a: PlaneState; b: PlaneState };
+  bullets: BulletState[];
   tick: number;
 }
 
@@ -310,18 +327,18 @@ Hard rules:
 
 `stepMatch` per-tick order (authoritative):
 
-1. `stepPlane` for each plane (throttle→thrust along nose, clamp speed; apply control torque unless stumbling; re-align velocity toward nose by `VELOCITY_ALIGN`; integrate position; decay `stumbleRemaining`, `fireCooldown`; regen ammo).
-2. Handle `fire` intents: if `ammo ≥ AMMO_PER_SHOT` and `fireCooldown ≤ 0` and not stumbling → spawn bullet at muzzle along nose, apply `RECOIL_IMPULSE` to shooter, spend ammo, set cooldown.
-3. `stepBullets` (integrate, expire by `BULLET_LIFETIME`).
-4. `collision`: bullet↔opponent (within `PLANE_HIT_RADIUS`) → apply `HIT_IMPULSE` along bullet dir to victim's velocity, set `stumbleRemaining = STUMBLE_DURATION` + tumble, consume bullet, emit `hit` event. Plane↔boundary (dome sphere + ground plane) → reflect velocity about surface normal × `BOUNDARY_RESTITUTION`, nudge inside, emit `bounce` event.
-5. `ring`: decrement `timeUntilTeleport`; enter `warning` at `RING_WARNING` remaining and pick+reveal `nextCenter`; at 0, teleport (respect `RING_MIN_TELEPORT_DIST`, stay within dome, above ground), emit `ringTeleport`.
+1. `stepPlane` for each plane (throttle changes and clamps `flightSpeed`; apply control torque unless stumbling; ease total `vel` toward `nose * flightSpeed` by `VELOCITY_ALIGN` without erasing external impulses; integrate position; decrement stumble/cooldown ticks; regen ammo).
+2. Handle `fire` intents: if `ammo ≥ AMMO_PER_SHOT` and `fireCooldownTicks ≤ 0` and not stumbling → spawn bullet at muzzle along nose, apply `RECOIL_IMPULSE` to shooter, spend ammo, set cooldown ticks.
+3. `stepBullets` (retain previous position, integrate, expire at lifetime or arena boundary).
+4. `collision`: swept bullet↔opponent → apply `HIT_IMPULSE` along bullet direction to victim `vel`, assign authoritative stumble ticks/angular velocity, consume bullet, emit `hit`. Plane↔plane → separate symmetrically and reflect relative velocity using `PLANE_COLLISION_RESTITUTION`. Plane↔boundary (dome sphere + ground plane) → reflect velocity about surface normal × `BOUNDARY_RESTITUTION`, nudge inside, emit `bounce`.
+5. `ring`: decrement `teleportTicksRemaining`; enter `warning` at the configured warning-tick threshold and pick+reveal `nextCenter`; at 0, teleport (respect `RING_MIN_TELEPORT_DIST`, keep the entire scoring sphere inside the playable dome/above ground), emit `ringTeleport`.
 6. **Scoring resolution (GAME.md §4, §4.1)** — the tug-of-war rule:
    - Compute `inRing` for each plane (distance to `ring.center` < `radius`).
    - If exactly one inside → that plane scores `RING_POINTS_PER_SEC * dt`.
    - If both inside → compare distance-to-center; the closer plane scores; if `|dA − dB| ≤ RING_CENTER_TIE_EPS` → nobody scores this step.
    - If none inside → nobody scores.
    - Set each plane's `scoring` flag accordingly (drives HUD/ring color).
-7. **Match phase** (§11): decrement `timeRemaining` in `Playing`; at 0, → `Ended` (winner) or `SuddenDeath` (tie); in `SuddenDeath`, first score → `Ended`.
+7. **Match phase** (§11): after scoring, decrement regulation ticks in `Playing`; at 0, → `Ended` (winner) or relocate/shrink the ring and enter `SuddenDeath` (tie). Sudden-death scoring begins on the following tick; its first scoring claimant receives that tick and then the match ends.
 
 ### 5.4 `protocol.ts`
 
@@ -332,12 +349,12 @@ Central `encode(msg): string` / `decode(raw): Message`, message-tag constants, a
 ## 6. Simulation & Physics Detail (to prevent divergent implementations)
 
 - **Coordinate system:** Y-up, right-handed (three.js default). Nose = plane's local `-Z` (three's forward) or `+Z` — **pick one in `math.ts` and document it**; every muzzle/thrust/align calc uses that constant.
-- **Flight is thrust + momentum, no gravity** (`GRAVITY=0`) **[FLAG]** — keeps it "pinball in the sky" (`GAME.md` §2, §6). Plane always moves forward within `[MIN_SPEED, MAX_SPEED]`; you cannot stop (`GAME.md` §7 "can't stop on a dime").
-- **The align mechanic is the soul of the feel:** velocity continuously eases toward `nose * currentSpeed` at rate `VELOCITY_ALIGN`. A knockback injects an external impulse into `vel`; the plane then _drifts sideways and recovers_ as alignment reasserts — this is what makes a shove feel physical and the recovery a skill (`GAME.md` §5, §7). Get this curve right before tuning anything else.
-- **Stumble:** while `stumbleRemaining > 0`, ignore control input and apply a tumbling angular velocity; controls return when it hits 0. Cannot fire while stumbling (`GAME.md` §9).
-- **Gun = projectiles, not hitscan [FLAG]:** `GAME.md` §5 says "shove along the shot's line of travel." Visible tracer bullets make recoil, limited ammo, and dodging tangible and juicy, and map cleanly to "impulse along bullet direction." (Hitscan considered and rejected as less readable/arcade.) If the human prefers hitscan, only `bullet.ts`/`collision.ts` change.
-- **Boundaries** (`GAME.md` §6): dome = sphere of `DOME_RADIUS` centered at origin, sitting on ground plane `y = GROUND_Y`. Both surfaces reflect velocity (`× BOUNDARY_RESTITUTION`) — same springy rule everywhere. Exact dome shape is tunable; the _behavior_ (ricochet, never hard-stop) is not.
-- **Ring is a sphere** of `RING_RADIUS`; "inside" = center distance < radius. Teleport target: random point inside dome, above a min altitude, ≥ `RING_MIN_TELEPORT_DIST` from current center.
+- **Flight is thrust + momentum, no gravity** (`GRAVITY=0`) — keeps it "pinball in the sky" (`GAME.md` §2, §6). `flightSpeed` always stays within `[MIN_SPEED, MAX_SPEED]`; total velocity may temporarily exceed or oppose it after an impulse, so you cannot stop on command but a bonk remains meaningful (`DECISIONS.md` D004–D005).
+- **The align mechanic is the soul of the feel:** total velocity continuously eases toward `nose * flightSpeed` at rate `VELOCITY_ALIGN`. A knockback injects an external impulse into `vel`; the plane then _drifts sideways and recovers_ as alignment reasserts. Do not hard-clamp ordinary post-hit total velocity to `MAX_SPEED`; only an intentionally generous safety ceiling may prevent numerical runaway.
+- **Stumble:** while `stumbleTicksRemaining > 0`, ignore control input and integrate the authoritative `stumbleAngularVelocity`; controls return when it reaches 0. A stumbling plane cannot fire (`GAME.md` §9, `DECISIONS.md` D006).
+- **Gun = projectiles, not hitscan:** visible tracer bullets make recoil, limited ammo, and dodging tangible. Use swept collision at supported relative speeds. Projectiles expire on ground/dome contact rather than ricocheting (`DECISIONS.md` D003, D008).
+- **Plane collisions and boundaries** (`GAME.md` §6): planes bounce symmetrically off one another. The dome is the upper half of a sphere of `DOME_RADIUS` centered at the ground origin, with playable space also constrained by `y >= GROUND_Y`. Plane contacts reflect velocity with configured restitution and positional separation; they never clamp or teleport a plane as ordinary behavior.
+- **Ring is a sphere** of `RING_RADIUS`; "inside" = plane-center distance < radius. Teleport targets keep the whole sphere inside the playable upper dome, above the ground, and ≥ `RING_MIN_TELEPORT_DIST` from the current center. Rendering must communicate the spherical boundary (`DECISIONS.md` D009).
 
 ---
 
@@ -368,7 +385,7 @@ Every inbound `input` is **clamped** (`throttle/pitch/roll/yaw` to `[-1,1]`, `fi
 
 ### 7.5 Disconnection (`GAME.md` §9)
 
-A 1v1 can't continue against a frozen ghost. On socket close during a live match: end the match, emit `matchEnd{reason:'opponentLeft'}` to the survivor. **[FLAG] default ruling:** if disconnect happens during `Playing`/`SuddenDeath`, **award the win to the remaining player**; during `Countdown`, no-contest. No reconnection in v1. (`GAME.md` left the exact ruling open — this is the default; confirm with the human.)
+A 1v1 can't continue against a frozen ghost. On socket close during a live match: end the match and emit `matchEnd{reason:'opponentLeft'}` to the survivor. If disconnect happens during `Playing`/`SuddenDeath`, **award the win to the remaining player**; during `Countdown`, end as a no-contest. No reconnection in v1 (`GAME.md` §9, `DECISIONS.md` D010).
 
 ---
 
@@ -507,15 +524,11 @@ The detailed evidence required at each milestone is in [`TESTING.md`](./TESTING.
 
 ---
 
-## 17. Open Decisions / Flags for Review
+## 17. Decisions & Deferred Scope
 
-Collected **[FLAG]**s — decisions this doc made that go beyond or refine `GAME.md`; raise them with the human rather than drifting further:
+The former implementation flags are accepted for v1 and recorded with rationale in [`DECISIONS.md`](./DECISIONS.md): hand-rolled `ws`/TCP transport, visible projectiles, no gravity, impulse-preserving velocity alignment, authoritative stumble motion, integer tick timing, plane collision/projectile boundary behavior, spherical capture volume, and disconnect outcomes.
 
-1. **`ws` (hand-rolled) over Colyseus** (§2). Escalate if the room/sync plumbing becomes a slog.
-2. **Projectiles, not hitscan** (§6) — refines `GAME.md` §5's "line of travel."
-3. **No gravity** (§5.1, §6) — flight is pure thrust + momentum.
-4. **Disconnect ⇒ remaining player awarded the win** during live play (§7.5) — `GAME.md` §9 left this open.
-5. **WebSocket/TCP now, WebTransport later** (§4.1) — accepting head-of-line blocking for v1 simplicity.
+Reopen one only when implementation measurements or playtests provide new evidence. Record the superseding decision before changing code or governing documents.
 
 Deferred by design (`GAME.md` §12): >2 players, multiple rings, obstacles, power-ups, progression, horizontal server scaling, reconnection.
 

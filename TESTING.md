@@ -3,10 +3,11 @@
 > **Purpose:** define how SkyRing earns confidence at every milestone, from a pure
 > simulation rule to a complete two-browser match.
 >
-> **Companion docs:** [`GAME.md`](./GAME.md) defines intended game behavior and
-> [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) defines the architecture. This document
-> defines verification. It does not override either source: when behavior changes,
-> update the governing document first and then update the affected tests.
+> **Companion docs:** [`GAME.md`](./GAME.md) defines intended game behavior,
+> [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) defines the architecture, and
+> [`DECISIONS.md`](./DECISIONS.md) records settled choices. This document defines
+> verification. It does not override those sources: when behavior changes, update the
+> governing document first and then update the affected tests.
 
 ---
 
