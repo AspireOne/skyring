@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-import { trackBrowserEvidence } from './browser-evidence.js';
+import {
+  expectBrowserEvidenceClean,
+  trackBrowserEvidence,
+} from './browser-evidence.js';
 
 test('@performance software-WebGL client keeps its baseline frame cadence', async ({
   page,
@@ -35,6 +38,5 @@ test('@performance software-WebGL client keeps its baseline frame cadence', asyn
     `[performance] browser frame p50=${p50.toFixed(3)}ms, p95=${p95.toFixed(3)}ms, p99=${p99.toFixed(3)}ms\n`,
   );
   expect(p95).toBeLessThan(50);
-  expect(evidence.errors).toEqual([]);
-  expect(evidence.failedRequests).toEqual([]);
+  expectBrowserEvidenceClean([evidence]);
 });

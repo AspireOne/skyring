@@ -1,28 +1,16 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-function trackErrors(page: Page, sink: string[]): void {
-  page.on('console', (message) => {
-    if (message.type() === 'error') sink.push(message.text());
-  });
-  page.on('pageerror', (error) => sink.push(error.message));
-}
+import {
+  expectBrowserEvidenceClean,
+  openBrowserPair,
+} from './browser-evidence.js';
 
 test('two players exchange deterministic bonks with ammo, tracers, and stumble feedback', async ({
   browser,
 }) => {
   const room = `COMBAT${Date.now() % 100000}`;
-  const contextA = await browser.newContext();
-  const contextB = await browser.newContext();
-  const pageA = await contextA.newPage();
-  const pageB = await contextB.newPage();
-  const errors: string[] = [];
-  trackErrors(pageA, errors);
-  trackErrors(pageB, errors);
-
-  await Promise.all([
-    pageA.goto(`/?room=${room}`),
-    pageB.goto(`/?room=${room}`),
-  ]);
+  const pair = await openBrowserPair(browser, room);
+  const [pageA, pageB] = pair.pages;
   await Promise.all(
     [pageA, pageB].map((page) =>
       expect(page.locator('#app')).toHaveAttribute(
@@ -85,7 +73,6 @@ test('two players exchange deterministic bonks with ammo, tracers, and stumble f
   await expect(pageA.locator('[data-testid="hud-ammo"]')).toContainText(
     'BONK ENERGY',
   );
-  expect(errors).toEqual([]);
-
-  await Promise.all([contextA.close(), contextB.close()]);
+  expectBrowserEvidenceClean(pair.evidence);
+  await pair.close();
 });

@@ -33,17 +33,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run static, integration, network, performance, and soak gates
-        run: pnpm verify && pnpm test:integration && pnpm test:network && pnpm test:performance && pnpm test:soak
-
-      - name: Run compiled production smoke
-        run: pnpm test:smoke
-
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run production browser smoke tests
-        run: pnpm test:e2e && pnpm test:performance:browser
+      - name: Run complete verification
+        run: pnpm verify:full
 
       - name: Retain browser failure evidence
         if: failure()

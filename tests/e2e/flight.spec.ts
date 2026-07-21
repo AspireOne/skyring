@@ -1,15 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
-type Vec3 = [number, number, number];
+import {
+  expectBrowserEvidenceClean,
+  openBrowserPair,
+} from './browser-evidence.js';
 
-function trackErrors(page: Page, sink: string[]): void {
-  page.on('console', (message) => {
-    if (message.type() === 'error') {
-      sink.push(message.text());
-    }
-  });
-  page.on('pageerror', (error) => sink.push(error.message));
-}
+type Vec3 = [number, number, number];
 
 async function localPos(page: Page): Promise<Vec3> {
   return page.evaluate(() => window.__skyringState?.localPos ?? [0, 0, 0]);
@@ -23,18 +19,8 @@ test('two players pair, fly, and steer their own planes', async ({
   browser,
 }) => {
   const room = `DUO${Date.now() % 100000}`;
-  const contextA = await browser.newContext();
-  const contextB = await browser.newContext();
-  const pageA = await contextA.newPage();
-  const pageB = await contextB.newPage();
-  const errors: string[] = [];
-  trackErrors(pageA, errors);
-  trackErrors(pageB, errors);
-
-  await Promise.all([
-    pageA.goto(`/?room=${room}`),
-    pageB.goto(`/?room=${room}`),
-  ]);
+  const pair = await openBrowserPair(browser, room);
+  const [pageA, pageB] = pair.pages;
 
   // Both clients pair into the same match on opposite slots.
   await expect(pageA.locator('#app')).toHaveAttribute(
@@ -79,8 +65,6 @@ test('two players pair, fly, and steer their own planes', async ({
   const after = await localPos(pageA);
 
   expect(distance(before, after)).toBeGreaterThan(20);
-  expect(errors).toEqual([]);
-
-  await contextA.close();
-  await contextB.close();
+  expectBrowserEvidenceClean(pair.evidence);
+  await pair.close();
 });

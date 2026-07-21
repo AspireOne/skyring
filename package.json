@@ -11,6 +11,7 @@
   "scripts": {
     "build": "pnpm typecheck && pnpm --filter @skyring/client build",
     "build:client": "pnpm exec tsc -b packages/shared packages/client --pretty && pnpm --filter @skyring/client build",
+    "build:e2e": "VITE_SERVER_URL=ws://127.0.0.1:4174 pnpm build",
     "build:server": "pnpm exec tsc -b packages/shared packages/server --pretty",
     "dev": "concurrently --kill-others-on-fail --names client,server --prefix-colors cyan,magenta \"pnpm --filter @skyring/client dev\" \"pnpm --filter @skyring/server dev\"",
     "dev:client": "pnpm --filter @skyring/client dev",
@@ -27,18 +28,21 @@
     "test": "vitest run packages",
     "test:assets": "vitest run tests/assets",
     "test:coverage": "vitest run packages tests/integration --coverage",
-    "test:e2e": "VITE_SERVER_URL=ws://127.0.0.1:4174 pnpm build && playwright test --grep-invert @performance",
+    "test:e2e": "pnpm build:e2e && pnpm test:e2e:run",
+    "test:e2e:run": "playwright test --grep-invert @performance",
     "test:integration": "vitest run tests/integration",
     "test:network": "vitest run tests/network",
     "test:performance": "vitest run tests/performance",
-    "test:performance:browser": "SKYRING_PERFORMANCE=1 VITE_SERVER_URL=ws://127.0.0.1:4174 pnpm build && SKYRING_PERFORMANCE=1 playwright test --grep @performance --workers=1",
+    "test:performance:browser": "pnpm build:e2e && pnpm test:performance:browser:run",
+    "test:performance:browser:run": "SKYRING_PERFORMANCE=1 playwright test --grep @performance --workers=1",
     "test:requirements": "vitest run tests/requirements",
-    "test:smoke": "pnpm build && vitest run tests/smoke",
+    "test:smoke": "pnpm build && pnpm test:smoke:run",
+    "test:smoke:run": "vitest run tests/smoke",
     "test:soak": "vitest run tests/soak",
     "test:watch": "vitest packages",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --noEmit --pretty",
-    "verify": "pnpm typecheck && pnpm lint && pnpm knip && pnpm test && pnpm test:assets && pnpm test:requirements && pnpm build",
-    "verify:full": "pnpm verify && pnpm test:integration && pnpm test:network && pnpm test:performance && pnpm test:performance:browser && pnpm test:soak && pnpm test:smoke && pnpm test:e2e"
+    "verify": "pnpm build && pnpm lint && pnpm knip && pnpm test && pnpm test:assets && pnpm test:requirements",
+    "verify:full": "VITE_SERVER_URL=ws://127.0.0.1:4174 pnpm verify && pnpm test:integration && pnpm test:network && pnpm test:performance && pnpm test:performance:browser:run && pnpm test:soak && pnpm test:smoke:run && pnpm test:e2e:run"
   },
   "lint-staged": {
     "*.{cjs,js,mjs,ts}": [

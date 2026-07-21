@@ -1,22 +1,20 @@
 import { expect, test } from '@playwright/test';
 
-import { trackBrowserEvidence } from './browser-evidence.js';
+import {
+  expectBrowserEvidenceClean,
+  openBrowserPair,
+} from './browser-evidence.js';
 
 test('essential HUD stays readable at compact and desktop viewports', async ({
   browser,
 }) => {
   const room = `LAYOUT${Date.now() % 100000}`;
-  const compact = await browser.newContext({
-    viewport: { width: 360, height: 640 },
-  });
-  const desktop = await browser.newContext({
-    viewport: { width: 1440, height: 900 },
-  });
-  const pages = await Promise.all([compact.newPage(), desktop.newPage()]);
-  const evidence = pages.map((page) => trackBrowserEvidence(page));
-  await Promise.all(pages.map((page) => page.goto(`/?room=${room}`)));
+  const pair = await openBrowserPair(browser, room, [
+    { viewport: { width: 360, height: 640 } },
+    { viewport: { width: 1440, height: 900 } },
+  ]);
 
-  for (const page of pages) {
+  for (const page of pair.pages) {
     await expect(page.locator('#app')).toHaveAttribute(
       'data-match-phase',
       'playing',
@@ -44,10 +42,6 @@ test('essential HUD stays readable at compact and desktop viewports', async ({
     }
   }
 
-  for (const record of evidence) {
-    expect(record.errors).toEqual([]);
-    expect(record.failedRequests).toEqual([]);
-  }
-
-  await Promise.all([compact.close(), desktop.close()]);
+  expectBrowserEvidenceClean(pair.evidence);
+  await pair.close();
 });

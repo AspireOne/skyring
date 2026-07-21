@@ -1,23 +1,19 @@
 import { expect, test } from '@playwright/test';
 
+import {
+  expectBrowserEvidenceClean,
+  trackBrowserEvidence,
+} from './browser-evidence.js';
+
 test('production client renders WebGL, connects, and enters matchmaking', async ({
   page,
   request,
 }) => {
-  const browserErrors: string[] = [];
-  const failedRequests: string[] = [];
+  const evidence = trackBrowserEvidence(page);
   const loadedAssets = new Set<string>();
-  page.on('console', (message) => {
-    if (message.type() === 'error') {
-      browserErrors.push(message.text());
-    }
-  });
-  page.on('pageerror', (error) => browserErrors.push(error.message));
-  page.on('requestfailed', (request) => failedRequests.push(request.url()));
   page.on('response', (response) => {
     const path = new URL(response.url()).pathname;
     if (path.startsWith('/assets/')) loadedAssets.add(path);
-    if (response.status() >= 400) failedRequests.push(response.url());
   });
 
   const healthResponse = await request.get('http://127.0.0.1:4174/health');
@@ -43,8 +39,7 @@ test('production client renders WebGL, connects, and enters matchmaking', async 
   await expect(page.locator('[data-testid="net-status"]')).toContainText(
     'Waiting for an opponent',
   );
-  expect(browserErrors).toEqual([]);
-  expect(failedRequests).toEqual([]);
+  expectBrowserEvidenceClean([evidence]);
   for (const asset of [
     '/assets/models/aeroplane.glb',
     '/assets/models/airco-dh2.glb',
