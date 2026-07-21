@@ -38,7 +38,9 @@ pnpm test:network       # latency/jitter/stall prediction matrix
 pnpm test:performance   # server/snapshot release budgets
 pnpm test:soak          # seeded full matches plus repeated real sockets
 pnpm test:smoke         # compiled production server entrypoint
+pnpm test:containers    # build and runtime-smoke both OCI images
 pnpm verify:full        # every automated release gate above
+pnpm verify:release     # verify:full plus release-container evidence
 ```
 
 Use `pnpm test:watch` while developing and `pnpm test:coverage` for diagnostic

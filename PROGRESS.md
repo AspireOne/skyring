@@ -41,7 +41,8 @@ milestone, verification result, decision, known issue, or next action changes.
 Milestone 7 local release candidate passed on 2026-07-21 with Node 24.15.0 and
 pnpm 11.15.1:
 
-- `pnpm verify:full` — passed as one canonical run: typecheck, ESLint, Knip,
+- `pnpm verify:release` — passed as one canonical run, composing `verify:full` with the
+  container runtime smoke: typecheck, ESLint, Knip,
   157 unit tests, 2 asset tests, 2 requirement tests, production build, 18 real-WebSocket
   integration tests, 5 network profiles, 2 server/snapshot performance tests, 1 isolated
   browser-performance test, 2 soak tests, 1 compiled-production smoke, and 8 functional
@@ -50,15 +51,17 @@ pnpm 11.15.1:
   the 417 ms snapshot pause; every profile finished at `ackSeq=180`, empty retained input,
   and rendered error below 0.001 units.
 - Performance baseline: 32 concurrent firing authoritative matches advanced at p95
-  0.449 ms per 60 Hz server frame; a maximum-64-projectile snapshot was 8,052 bytes;
-  isolated 960×540 software-WebGL client p50/p95 16.7/33.4 ms.
+  0.416 ms per 60 Hz server frame; a maximum-64-projectile snapshot was 8,052 bytes;
+  isolated 960×540 software-WebGL client p95 33.4 ms.
 - Soak: 12 distinct full production-duration matches each ran twice with identical final
   state and per-tick invariants; 30 repeated real-WebSocket matches left zero connections,
   matches, or waiters and a 4.14 MiB observed heap range.
 - `docker build` passed for digest-pinned server/client Dockerfiles; final local images
-  were 61,589,113 and 26,724,422 bytes. Both ran as their unprivileged users (`node`/
-  `nginx`), became healthy, and served their expected JSON health responses. `docker
-compose config --quiet` passed.
+  were 61,589,492 and 26,724,422 bytes. Both ran as their unprivileged users (`node`/
+  `nginx`), became healthy, and served their expected JSON health responses.
+  `docker compose config --quiet` passed.
+- The same container build/user/health/cleanup evidence is now reproducible through
+  `pnpm test:containers`; `pnpm verify:release` composes it with every non-container gate.
 
 ### What Milestone 7 added
 

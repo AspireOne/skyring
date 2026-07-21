@@ -32,9 +32,12 @@ Both images run as unprivileged processes on port 8080 and contain health checks
 server build deploys only its production dependency graph and compiled workspace output;
 the client runtime contains only Nginx and the Vite artifact.
 
-For a local production-topology check, `docker compose up --build` serves the client at
-`http://localhost:4173` and the authoritative server at `ws://localhost:8080`. Open two
-private browser contexts with the same `?room=CODE` query to pair them deterministically.
+`pnpm test:containers` reproducibly builds both images, validates the Compose definition,
+runs each image as its declared unprivileged user, and checks its published health
+response. For an interactive local production-topology check, `docker compose up --build`
+serves the client at `http://localhost:4173` and the authoritative server at
+`ws://localhost:8080`. Open two private browser contexts with the same `?room=CODE` query
+to pair them deterministically.
 
 ## Platform deployment
 
@@ -42,7 +45,7 @@ private browser contexts with the same `?room=CODE` query to pair them determini
 2. Deploy the server first as one long-lived instance; set `HOST=0.0.0.0`, accept the
    platform `PORT`, enable TLS/WebSocket upgrades, and wait for `/health` to pass.
 3. Build/deploy the client with the server's public `wss://` URL.
-4. Run `pnpm test:smoke` locally against the exact revision, then perform the release
+4. Run `pnpm verify:release` locally against the exact revision, then perform the release
    evidence in `RELEASE.md` against the public URLs.
 5. Roll back both artifacts to their prior immutable tags if health, browser console,
    matchmaking, or the two-player journey fails. Existing in-memory matches do not

@@ -358,8 +358,10 @@ pnpm test:performance     # authoritative server/snapshot budgets
 pnpm test:performance:browser # isolated software-WebGL frame budget
 pnpm test:soak            # explicit long/random suite; not a precommit task
 pnpm test:smoke           # compiled production entry over HTTP + real ws
+pnpm test:containers      # build and runtime-smoke both release images
 pnpm verify               # typecheck + lint + knip + test + build
 pnpm verify:full          # every automated release lane above
+pnpm verify:release       # verify:full + release-container runtime evidence
 ```
 
 Lanes:

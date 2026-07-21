@@ -10,11 +10,11 @@
 
 ## Automated gates
 
-- [x] `pnpm verify:full` passed on 2026-07-21: 157 unit, 2 asset, 2 requirement,
+- [x] `pnpm verify:release` passed on 2026-07-21: 157 unit, 2 asset, 2 requirement,
       18 integration, 5 network, 2 performance, 1 browser-performance, 2 soak,
       1 production-smoke, and 8 functional browser tests.
-- [x] Server/client OCI images built from the pinned Dockerfiles, ran as unprivileged
-      users, became healthy, and served the expected health payloads.
+- [x] `pnpm test:containers` built the pinned server/client OCI images, ran them as
+      unprivileged users, and verified their health payloads and Compose definition.
 - [x] Network, performance, soak, container-size, and regression details are recorded in
       `PROGRESS.md`, `NETWORK.md`, and `PERFORMANCE.md`.
 

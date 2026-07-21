@@ -479,7 +479,8 @@ Waiting ──(2 players)──▶ Countdown(COUNTDOWN s) ──▶ Playing(MATC
   - `test:performance` / `test:performance:browser` — server/snapshot and isolated browser budgets.
   - `test:soak` — explicit seeded long/random runs; never part of precommit.
   - `test:smoke` — compiled production server health/WebSocket lifecycle.
-  - `verify` / `verify:full` — stable fast and complete verification entry points.
+  - `test:containers` — build and runtime-smoke both unprivileged OCI images.
+  - `verify` / `verify:full` / `verify:release` — fast, complete non-container, and complete release verification entry points.
   - `lint` / `format` / `knip` — extend the existing configs to all packages.
 - **Dev runtime consumes shared TS source directly** (Vite + tsx resolve `@skyring/shared` to its `src`). No compile-shared-then-run loop in development.
 - **Keep the strict scaffold settings** (already present): `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`, `isolatedModules`. They apply to every package via `tsconfig.base.json`.

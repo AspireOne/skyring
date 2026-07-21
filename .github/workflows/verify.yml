@@ -39,11 +39,8 @@ jobs:
       - name: Run compiled production smoke
         run: pnpm test:smoke
 
-      - name: Build release containers
-        run: |
-          docker build -f Dockerfile.server -t skyring-server:verify .
-          docker build -f Dockerfile.client --build-arg VITE_SERVER_URL=wss://server.example.invalid -t skyring-client:verify .
-          docker compose config --quiet
+      - name: Build and smoke release containers
+        run: pnpm test:containers
 
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium

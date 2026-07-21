@@ -21,6 +21,7 @@
     "start": "pnpm --filter @skyring/server start",
     "test": "vitest run packages",
     "test:assets": "vitest run tests/assets",
+    "test:containers": "tsx scripts/container-smoke.ts",
     "test:coverage": "vitest run packages tests/integration --coverage",
     "test:e2e": "VITE_SERVER_URL=ws://127.0.0.1:4174 pnpm build && playwright test --grep-invert @performance",
     "test:integration": "vitest run tests/integration",
@@ -33,7 +34,8 @@
     "test:watch": "vitest packages",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --noEmit --pretty",
     "verify": "pnpm typecheck && pnpm lint && pnpm knip && pnpm test && pnpm test:assets && pnpm test:requirements && pnpm build",
-    "verify:full": "pnpm verify && pnpm test:integration && pnpm test:network && pnpm test:performance && pnpm test:performance:browser && pnpm test:soak && pnpm test:smoke && pnpm test:e2e"
+    "verify:full": "pnpm verify && pnpm test:integration && pnpm test:network && pnpm test:performance && pnpm test:performance:browser && pnpm test:soak && pnpm test:smoke && pnpm test:e2e",
+    "verify:release": "pnpm verify:full && pnpm test:containers"
   },
   "lint-staged": {
     "*.{cjs,js,mjs,ts}": [
