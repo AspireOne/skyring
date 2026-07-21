@@ -27,7 +27,7 @@ pnpm dev:server   # server only
 ```
 
 The Vite client and Node server run together. The server exposes `GET /health` and
-hosts the WebSocket endpoint.
+hosts the WebSocket endpoint. Open the game at <http://localhost:5192>.
 
 ## Verification
 

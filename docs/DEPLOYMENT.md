@@ -14,6 +14,7 @@ pnpm dev
 ```
 
 Use `pnpm dev:client` and `pnpm dev:server` when separate terminals are preferable.
+The development client is available at <http://localhost:5192> by default.
 
 ## Production contract
 
