@@ -156,6 +156,39 @@ describe('NetClient handshake and queueing', () => {
   });
 });
 
+describe('NetClient input and render view', () => {
+  it('sends input with a monotonically increasing sequence', () => {
+    const client = makeClient();
+    client.connect();
+    socket.open();
+    socket.emit({ t: 'welcome', yourConnId: 'c1', serverTime: 0, version: 1 });
+
+    client.sendInput({ throttle: 1, pitch: 0, roll: 0, yaw: 0, fire: false });
+    client.sendInput({ throttle: 0, pitch: 1, roll: 0, yaw: 0, fire: true });
+    const inputs = socket.sentOf('input');
+    expect(inputs.map((message) => message.input.seq)).toEqual([1, 2]);
+    expect(inputs[1]?.input.fire).toBe(true);
+  });
+
+  it('exposes an interpolated render view once snapshots arrive', () => {
+    const client = makeClient();
+    client.connect();
+    socket.open();
+    socket.emit({ t: 'welcome', yourConnId: 'c1', serverTime: 0, version: 1 });
+    socket.emit({
+      t: 'matchFound',
+      matchId: 'm1',
+      yourSlot: 'a',
+      constants: DEFAULT_GAME_CONFIG,
+    });
+    const state = createInitialMatchState(DEFAULT_GAME_CONFIG);
+    clock = 0;
+    socket.emit({ t: 'snapshot', tick: 1, serverTime: 0, ackSeq: -1, state });
+    clock = 1000;
+    expect(client.renderView()).toBeDefined();
+  });
+});
+
 describe('NetClient clock sync', () => {
   it('folds pong round trips into the clock and continues the initial burst', () => {
     const client = makeClient();

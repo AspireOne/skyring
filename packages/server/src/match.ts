@@ -1,19 +1,24 @@
 import {
   clampInputCommand,
   createInitialMatchState,
+  createRng,
   MATCH_PHASE,
+  NEUTRAL_INPUT,
+  stepMatch,
   type GameConfig,
   type InputCommand,
+  type MatchInputs,
   type MatchResult,
   type MatchState,
   type PlayerScores,
   type PlayerSlot,
+  type Rng,
 } from '@skyring/shared';
 
 import { type Now, TickScheduler } from './scheduler.js';
 
 import type { Connection } from './connection.js';
-import type { MatchEndReason } from '@skyring/shared';
+import type { GameEvent, MatchEndReason } from '@skyring/shared';
 
 export interface MatchDeps {
   readonly now: Now;
@@ -41,6 +46,8 @@ export class Match {
   private readonly players: Record<PlayerSlot, PlayerRuntime>;
   private readonly scheduler: TickScheduler;
   private readonly snapshotInterval: number;
+  private readonly dt: number;
+  private readonly rng: Rng;
   private ended = false;
 
   constructor(
@@ -57,6 +64,8 @@ export class Match {
       b: makePlayer('b', connectionB),
     };
     this.snapshotInterval = config.SIM_HZ / config.SNAPSHOT_HZ;
+    this.dt = 1 / config.SIM_HZ;
+    this.rng = createRng(seed);
     this.scheduler = new TickScheduler(
       config.SIM_HZ,
       () => this.step(),
@@ -84,18 +93,36 @@ export class Match {
       return;
     }
 
-    // Drain the latest intent per player; the sim itself lands in Milestone 3.
-    for (const player of Object.values(this.players)) {
-      if (player.lastInput !== undefined) {
-        player.lastProcessedSeq = player.lastInput.seq;
-      }
+    const inputs = this.drainInputs();
+    const events: GameEvent[] = [];
+    stepMatch(this.state, inputs, {
+      dt: this.dt,
+      config: this.config,
+      rng: this.rng,
+      events,
+    });
+
+    if (events.length > 0) {
+      this.broadcastEvents(events);
     }
-
-    this.state.tick += 1;
-
     if (this.state.tick % this.snapshotInterval === 0) {
       this.broadcastSnapshot();
     }
+  }
+
+  /**
+   * Take the latest intent per player (reusing the last known when a tick has
+   * none) and record it as processed for input acknowledgement.
+   */
+  private drainInputs(): MatchInputs {
+    const resolve = (player: PlayerRuntime): InputCommand => {
+      if (player.lastInput === undefined) {
+        return NEUTRAL_INPUT; // no intent yet; do not move the ack backward
+      }
+      player.lastProcessedSeq = player.lastInput.seq;
+      return player.lastInput;
+    };
+    return { a: resolve(this.players.a), b: resolve(this.players.b) };
   }
 
   receiveInput(connection: Connection, input: InputCommand): void {
@@ -154,6 +181,18 @@ export class Match {
     }
 
     this.deps.onEnded(this);
+  }
+
+  private broadcastEvents(events: GameEvent[]): void {
+    const serverTime = this.deps.now();
+    for (const player of Object.values(this.players)) {
+      player.connection.send({
+        t: 'event',
+        tick: this.state.tick,
+        serverTime,
+        events,
+      });
+    }
   }
 
   private broadcastSnapshot(): void {

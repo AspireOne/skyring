@@ -7,3 +7,12 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+interface Window {
+  /** Read-only diagnostic snapshot for automated tests (TESTING §9). */
+  __skyringState?: {
+    phase: string;
+    tick: number;
+    localPos: [number, number, number];
+  };
+}

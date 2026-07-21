@@ -67,3 +67,7 @@ export type {
   WelcomeMessage,
 } from './messages.js';
 export { createInitialMatchState } from './sim/state.js';
+export { stepPlane } from './sim/plane.js';
+export { resolvePlaneBoundaries, resolvePlanePlane } from './sim/collision.js';
+export { stepMatch, type MatchInputs, type StepContext } from './sim/match.js';
+export { NEUTRAL_INPUT } from './sim/input.js';

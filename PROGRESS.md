@@ -5,18 +5,16 @@ milestone, verification result, decision, known issue, or next action changes.
 
 ## Current position
 
-- **Active milestone:** Milestone 3 — authoritative flight, boundaries, and remote
-  interpolation.
-- **Current objective:** implement `stepPlane` + arena boundaries in `shared`; server
-  simulates both planes from real input; client renders the local plane from snapshots
-  (no prediction yet) and the remote plane interpolated.
+- **Active milestone:** Milestone 4 — ring, scoring, HUD, and match lifecycle.
+- **Current objective:** ring dwell/teleport/warning + tug-of-war scoring in `shared`;
+  HUD score + timer; full lifecycle incl. countdown, time-up winner, and sudden death.
 - **Governing decisions:** `DECISIONS.md` D001–D011.
 
 ## Milestones
 
 - [x] 1. Monorepo skeleton and verification toolchain
 - [x] 2. Connect, handshake, clock sync, and matchmaking
-- [ ] 3. Authoritative flight, boundaries, and remote interpolation
+- [x] 3. Authoritative flight, boundaries, and remote interpolation
 - [ ] 4. Ring, scoring, HUD, and match lifecycle
 - [ ] 5. Gun, knockback, stumble, prediction, and reconciliation
 - [ ] 6. Models, effects, audio, readability, and tuning
@@ -37,16 +35,35 @@ milestone, verification result, decision, known issue, or next action changes.
 
 ## Latest verification
 
-Milestone 2 verified on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
+Milestone 3 verified on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
 
-- `pnpm verify` — passed: typecheck (project refs + tests), ESLint, Knip, 73 unit tests,
-  production build.
-- `pnpm test:integration` — passed (12 tests): real ephemeral HTTP/WebSocket server
-  covering handshake/welcome, version rejection, ping/pong, quick-queue and room-code
-  pairing with isolation, snapshot streaming, and disconnect teardown/cleanup.
-- `pnpm test:e2e` — passed in Playwright Chromium: production client renders WebGL,
-  connects to the real server, and reaches the `queued` matchmaking state with no
-  console errors.
+- `pnpm verify` — passed: typecheck, ESLint, Knip, 106 unit tests, production build.
+- `pnpm test:integration` — passed (14 tests): matchmaking suite plus authoritative
+  flight over the wire (countdown → playing transition, both planes moving, phaseChange
+  event delivery, both clients agreeing on phase).
+- `pnpm test:e2e` — passed (2 journeys): the solo connect/queue smoke, and a two-browser
+  flight journey where both clients pair into one match, reach `playing`, and steering
+  moves the local plane — with no console errors.
+
+### What Milestone 3 added
+
+- **shared sim:** `sim/plane.ts` (`stepPlane`: throttle → flightSpeed, body-frame control
+  torque, world-frame stumble tumble, velocity alignment toward nose*speed, integration),
+  `sim/collision.ts` (dome/ground/plane-plane springy bounce with restitution + separation
+  and `bounce` events), `sim/match.ts` (`stepMatch` composing per-tick order + countdown→
+  playing transition), and `sim/input.ts` (`NEUTRAL_INPUT`).
+- **server:** `Match.step()` now runs `stepMatch` with a seeded RNG, drains real inputs
+  (reusing last-known, correct ackSeq), and broadcasts `event` batches.
+- **client:** `net/snapshot-buffer.ts` (interpolation/hold-latest at render time),
+  `input/keyboard.ts` (pure key→axes mapping + DOM attach/blur), `render/renderer.ts`
+  (arena: ground/grid/dome, placeholder dart planes, damped chase camera),
+  `game/game-controller.ts` (render loop + fixed-rate input loop, status + read-only
+  `window.__skyringState` diagnostic), and a thin `main.ts`. `NetClient` gained
+  snapshot buffering, `sendInput`, and `renderView`.
+
+### Controls (M3 defaults, tune in M6)
+
+W/S throttle · ↑/↓ pitch · ←/→ roll · A/D yaw · Space fire.
 
 ### What Milestone 2 added
 
@@ -76,18 +93,23 @@ Milestone 2 verified on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
 
 ## Known issues / limitations
 
-- No authoritative physics yet: planes sit at their spawn transforms and the ring/score
-  do not change. Flight begins in Milestone 3.
-- No client-side prediction yet (deferred to Milestone 5); Milestone 3 renders the local
-  plane straight from snapshots and accepts input lag by design.
+- Ring never teleports and no scoring happens yet; regulation clock does not end the
+  match (planes fly indefinitely once Playing). All of this lands in Milestone 4.
+- No client-side prediction yet (deferred to Milestone 5); the local plane renders from
+  interpolated authoritative snapshots and lags input by ~INTERP_DELAY + latency, by
+  design for Milestone 3.
+- No gun/knockback/stumble-from-hits yet (Milestone 5). `stepPlane` already integrates
+  authoritative stumble state, so hits slot in cleanly.
 - Production assets are intentionally deferred until the renderer has a stable transform
   boundary in Milestone 6.
 
 ## Next action
 
-Milestone 3: implement `sim/plane.ts` (`stepPlane`: throttle, control torque, velocity
-alignment, integration) and `sim/collision.ts` boundaries (dome + ground bounce), compose
-them in a `stepMatch` invoked by `Match.step()`, feed real client input into the sim, and
-build the client render loop (chase camera, local plane from snapshots, remote plane
-interpolated). Add flight/boundary invariant tests, interpolation tests, and a two-browser
-flight smoke journey.
+Milestone 4: implement `sim/ring.ts` (dwell → warning reveals `nextCenter` once →
+teleport respecting `RING_MIN_TELEPORT_DIST` and dome/ground fit, via seeded RNG) and the
+tug-of-war scoring resolution (solo scorer; both-inside closer-to-center wins; tie epsilon
+→ nobody), wire them into `stepMatch` after collisions, and add the regulation-clock
+decrement with time-up winner + sudden-death (relocate/shrink ring, first point wins).
+Build the HUD (scores, timer, ammo placeholder, ring warning + contest state, results
+screen) and the ring visual. Add the full scoring/ring/lifecycle requirement matrix and
+win/tie browser journeys.

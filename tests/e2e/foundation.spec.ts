@@ -19,7 +19,8 @@ test('production client renders WebGL, connects, and enters matchmaking', async 
     service: 'skyring-server',
   });
 
-  await page.goto('/');
+  // Use an isolated room so this solo client never pairs with a parallel test.
+  await page.goto(`/?room=SOLO${Date.now() % 100000}`);
   const app = page.locator('#app');
   const canvas = page.locator('[data-testid="scene-canvas"]');
 
@@ -27,7 +28,7 @@ test('production client renders WebGL, connects, and enters matchmaking', async 
   await expect(app).toHaveAttribute('data-sim-hz', '60');
   await expect(canvas).toBeVisible();
 
-  // A single client quick-queues and waits for an opponent — proving the full
+  // A single client queues and waits for an opponent — proving the full
   // handshake → welcome → queue path over a real socket.
   await expect(app).toHaveAttribute('data-net-phase', 'queued');
   await expect(page.locator('[data-testid="net-status"]')).toContainText(

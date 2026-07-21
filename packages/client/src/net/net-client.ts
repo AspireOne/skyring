@@ -10,6 +10,12 @@ import {
 } from '@skyring/shared';
 
 import { ClockSync } from './clock-sync.js';
+import { SnapshotBuffer, type RenderView } from './snapshot-buffer.js';
+
+import type { InputAxes } from '../input/keyboard.js';
+
+/** Fallback interpolation delay before the match config arrives. */
+const DEFAULT_INTERP_DELAY_MS = 100;
 
 // Client-local clock-sync cadence (IMPLEMENTATION §4.5). These are purely local
 // timing knobs — they never cross the wire or affect authority — so they live
@@ -64,6 +70,8 @@ export class NetClient {
   constants: GameConfig | undefined;
   latestSnapshot: SnapshotMessage | undefined;
   readonly clock = new ClockSync();
+  readonly buffer = new SnapshotBuffer();
+  private inputSeq = 0;
 
   onUpdate: (() => void) | undefined;
   onEvent: ((message: EventMessage) => void) | undefined;
@@ -99,6 +107,30 @@ export class NetClient {
     socket.onmessage = (event) => this.handleFrame(event.data);
     socket.onclose = () => this.handleClose();
     socket.onerror = () => this.handleClose();
+  }
+
+  /** Send one control frame; assigns the monotonic input sequence. */
+  sendInput(axes: InputAxes): void {
+    this.inputSeq += 1;
+    this.send({
+      t: 'input',
+      input: {
+        seq: this.inputSeq,
+        tick: this.latestSnapshot?.tick ?? 0,
+        throttle: axes.throttle,
+        pitch: axes.pitch,
+        roll: axes.roll,
+        yaw: axes.yaw,
+        fire: axes.fire,
+      },
+    });
+  }
+
+  /** The interpolated world at the current render time (IMPLEMENTATION §4.7). */
+  renderView(): RenderView | undefined {
+    const delay = this.constants?.INTERP_DELAY_MS ?? DEFAULT_INTERP_DELAY_MS;
+    const renderTime = this.clock.estimateServerTime(this.now()) - delay;
+    return this.buffer.sample(renderTime);
   }
 
   dispose(): void {
@@ -154,6 +186,7 @@ export class NetClient {
         break;
       case 'snapshot':
         this.latestSnapshot = message;
+        this.buffer.push(message);
         break;
       case 'event':
         this.onEvent?.(message);
