@@ -20,7 +20,7 @@ interface Window {
     scores: { a: number; b: number };
     ringWarning: boolean;
     eventCounts: Record<
-      'hit' | 'bounce' | 'ringTeleport' | 'stumble' | 'phaseChange',
+      'fire' | 'hit' | 'bounce' | 'ringTeleport' | 'stumble' | 'phaseChange',
       number
     >;
   };

@@ -14,6 +14,7 @@ export class Hud {
   private readonly timer: HTMLDivElement;
   private readonly ringPill: HTMLDivElement;
   private readonly warning: HTMLDivElement;
+  private readonly ammo: HTMLDivElement;
   private readonly ammoValue: HTMLSpanElement;
   private readonly ammoFill: HTMLDivElement;
   private readonly result: HTMLDivElement;
@@ -23,6 +24,7 @@ export class Hud {
     this.root.dataset.testid = 'hud';
 
     const scoreboard = el('div', 'hud__scoreboard');
+    scoreboard.setAttribute('aria-label', 'Score and match timer');
     this.myScore = el('span', 'hud__score hud__score--me');
     this.myScore.dataset.testid = 'hud-my-score';
     this.timer = el('div', 'hud__timer');
@@ -33,28 +35,33 @@ export class Hud {
 
     this.ringPill = el('div', 'hud__ring');
     this.ringPill.dataset.testid = 'hud-ring';
+    this.ringPill.setAttribute('aria-live', 'polite');
     this.warning = el('div', 'hud__warning');
     this.warning.dataset.testid = 'hud-warning';
+    this.warning.setAttribute('role', 'status');
 
-    const ammo = el('div', 'hud__ammo');
-    ammo.dataset.testid = 'hud-ammo';
+    this.ammo = el('div', 'hud__ammo');
+    this.ammo.dataset.testid = 'hud-ammo';
+    this.ammo.setAttribute('role', 'meter');
+    this.ammo.setAttribute('aria-label', 'Bonk energy');
     const ammoLabel = el('div', 'hud__ammo-label');
     this.ammoValue = el('span', 'hud__ammo-value');
     ammoLabel.append('BONK ENERGY', this.ammoValue);
     const ammoTrack = el('div', 'hud__ammo-track');
     this.ammoFill = el('div', 'hud__ammo-fill');
     ammoTrack.append(this.ammoFill);
-    ammo.append(ammoLabel, ammoTrack);
+    this.ammo.append(ammoLabel, ammoTrack);
 
     this.result = el('div', 'hud__result');
     this.result.dataset.testid = 'hud-result';
+    this.result.setAttribute('role', 'alert');
     this.result.hidden = true;
 
     this.root.append(
       scoreboard,
       this.ringPill,
       this.warning,
-      ammo,
+      this.ammo,
       this.result,
     );
     parent.append(this.root);
@@ -76,6 +83,8 @@ export class Hud {
 
     this.ammoValue.textContent = `${Math.floor(model.ammo)} / ${model.ammoMax}`;
     this.ammoFill.style.transform = `scaleX(${model.ammoFraction})`;
+    this.ammo.setAttribute('aria-valuenow', String(Math.floor(model.ammo)));
+    this.ammo.setAttribute('aria-valuemax', String(model.ammoMax));
   }
 
   showResult(message: MatchEndMessage): void {

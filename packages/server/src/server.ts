@@ -15,6 +15,7 @@ import { WebSocketServer } from 'ws';
 import { Connection } from './connection.js';
 import { Matchmaker } from './matchmaker.js';
 
+import type { MatchContext } from './match.js';
 import type { Now } from './scheduler.js';
 import type { AddressInfo } from 'node:net';
 
@@ -45,7 +46,10 @@ export interface SkyRingServerOptions {
    * Test-only prescribed initial match state (TESTING §9, D011). Never set in
    * production; clients receive no state-mutation backdoor.
    */
-  readonly createInitialState?: (config: GameConfig) => MatchState;
+  readonly createInitialState?: (
+    config: GameConfig,
+    context: MatchContext,
+  ) => MatchState;
 }
 
 export interface SkyRingServer {

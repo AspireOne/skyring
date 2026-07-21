@@ -122,6 +122,12 @@ export interface HitEvent {
   dir: Vec3;
 }
 
+export interface FireEvent {
+  kind: 'fire';
+  slot: PlayerSlot;
+  pos: Vec3;
+}
+
 export type BounceSurface = 'dome' | 'ground' | 'plane';
 
 export interface BounceEvent {
@@ -148,7 +154,12 @@ export interface PhaseChangeEvent {
 }
 
 export type GameEvent =
-  HitEvent | BounceEvent | RingTeleportEvent | StumbleEvent | PhaseChangeEvent;
+  | FireEvent
+  | HitEvent
+  | BounceEvent
+  | RingTeleportEvent
+  | StumbleEvent
+  | PhaseChangeEvent;
 
 export type GameEventKind = GameEvent['kind'];
 

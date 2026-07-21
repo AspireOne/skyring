@@ -74,8 +74,8 @@ function stepActivePlay(
   stepPlane(state.planes.a, inputs.a, ctx.dt, ctx.config);
   stepPlane(state.planes.b, inputs.b, ctx.dt, ctx.config);
 
-  handleFireIntent(state, 'a', inputs.a, ctx.config);
-  handleFireIntent(state, 'b', inputs.b, ctx.config);
+  handleFireIntent(state, 'a', inputs.a, ctx.config, ctx.events);
+  handleFireIntent(state, 'b', inputs.b, ctx.config, ctx.events);
   stepBullets(state.bullets, ctx.dt, ctx.config);
   resolveBulletHits(state, ctx.config, ctx.rng, ctx.events);
 
@@ -102,6 +102,7 @@ function handleFireIntent(
   slot: PlayerSlot,
   input: InputCommand,
   config: GameConfig,
+  events: GameEvent[],
 ): void {
   if (!input.fire || state.bullets.length >= config.MAX_BULLETS) {
     return;
@@ -115,6 +116,7 @@ function handleFireIntent(
   if (bullet !== null) {
     state.nextBulletId += 1;
     state.bullets.push(bullet);
+    events.push({ kind: 'fire', slot, pos: [...bullet.previousPos] });
   }
 }
 

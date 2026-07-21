@@ -25,7 +25,14 @@ export interface MatchDeps {
   /** Called once the match has fully ended so the owner can drop references. */
   readonly onEnded: (match: Match) => void;
   /** Test-only prescribed initial state (TESTING §9, D011). */
-  readonly createInitialState?: (config: GameConfig) => MatchState;
+  readonly createInitialState?: (
+    config: GameConfig,
+    context: MatchContext,
+  ) => MatchState;
+}
+
+export interface MatchContext {
+  readonly room?: string;
 }
 
 interface PlayerRuntime {
@@ -58,9 +65,12 @@ export class Match {
     readonly seed: number,
     connectionA: Connection,
     connectionB: Connection,
+    context: MatchContext,
     private readonly deps: MatchDeps,
   ) {
-    this.state = (deps.createInitialState ?? createInitialMatchState)(config);
+    this.state = deps.createInitialState
+      ? deps.createInitialState(config, context)
+      : createInitialMatchState(config);
     this.players = {
       a: makePlayer('a', connectionA),
       b: makePlayer('b', connectionB),

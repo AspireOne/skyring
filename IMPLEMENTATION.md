@@ -427,14 +427,14 @@ JSON, tagged by `t`. Shapes are the contract; keep them in `shared/types.ts` + `
 
 **Server → Client**
 
-| `t`          | Payload                                                                    | Purpose                                    |
-| ------------ | -------------------------------------------------------------------------- | ------------------------------------------ |
-| `welcome`    | `{ yourConnId, serverTime, version }`                                      | Post-handshake ack.                        |
-| `pong`       | `{ clientTime, serverTime }`                                               | Clock sync reply.                          |
-| `matchFound` | `{ matchId, yourSlot: 'a'\|'b', constants }`                               | Paired; sends the tunables in effect.      |
-| `snapshot`   | `{ tick, serverTime, state: MatchState, ackSeq }`                          | Continuous world state + input ack (§4.6). |
-| `event`      | `{ kind: 'hit'\|'bounce'\|'ringTeleport'\|'stumble'\|'phaseChange', ... }` | Discrete feedback/lifecycle.               |
-| `matchEnd`   | `{ result: 'win'\|'lose'\|'draw', scores, reason }`                        | Terminal.                                  |
+| `t`          | Payload                                                                            | Purpose                                    |
+| ------------ | ---------------------------------------------------------------------------------- | ------------------------------------------ |
+| `welcome`    | `{ yourConnId, serverTime, version }`                                              | Post-handshake ack.                        |
+| `pong`       | `{ clientTime, serverTime }`                                                       | Clock sync reply.                          |
+| `matchFound` | `{ matchId, yourSlot: 'a'\|'b', constants }`                                       | Paired; sends the tunables in effect.      |
+| `snapshot`   | `{ tick, serverTime, state: MatchState, ackSeq }`                                  | Continuous world state + input ack (§4.6). |
+| `event`      | `{ kind: 'fire'\|'hit'\|'bounce'\|'ringTeleport'\|'stumble'\|'phaseChange', ... }` | Discrete feedback/lifecycle.               |
+| `matchEnd`   | `{ result: 'win'\|'lose'\|'draw', scores, reason }`                                | Terminal.                                  |
 
 `snapshot.ackSeq` is the recipient's `lastProcessedInputSeq` (drives reconciliation). Sending the full `constants` on `matchFound` means a tuning change ships without client redeploys and guarantees both sides agree.
 

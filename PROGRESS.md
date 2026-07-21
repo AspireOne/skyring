@@ -5,10 +5,11 @@ milestone, verification result, decision, known issue, or next action changes.
 
 ## Current position
 
-- **Active milestone:** Milestone 6 — models, effects, audio, readability, and tuning.
-- **Milestone 5 is complete and verified** (gun, knockback, stumble, local prediction,
-  reconciliation/error smoothing, ammo HUD/tracers, network adversity, and deterministic
-  two-browser combat).
+- **Active milestone:** Milestone 6 acceptance — implementation and all locally
+  executable evidence are complete; the required human full-match session remains open.
+- **Milestone 5 is complete and verified.** Milestone 6 now has production models/audio,
+  effects, responsive HUD, lifecycle/ring browser journeys, asset checks, and consolidated
+  traceability.
 - **Governing decisions:** `DECISIONS.md` D001–D011.
 
 ## Milestones
@@ -18,7 +19,7 @@ milestone, verification result, decision, known issue, or next action changes.
 - [x] 3. Authoritative flight, boundaries, and remote interpolation
 - [x] 4. Ring, scoring, HUD, and match lifecycle
 - [x] 5. Gun, knockback, stumble, prediction, and reconciliation
-- [ ] 6. Models, effects, audio, readability, and tuning
+- [ ] 6. Models, effects, audio, readability, and tuning (human acceptance pending)
 - [ ] 7. Deployment, soak, production smoke, and real-internet playtest
 
 ## Foundation checklist
@@ -35,6 +36,40 @@ milestone, verification result, decision, known issue, or next action changes.
 - [x] Run and record the complete foundation verification lane.
 
 ## Latest verification
+
+Milestone 6 automated gates passed on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
+
+- `pnpm verify` — passed: typecheck, ESLint, Knip, 154 unit tests, 2 asset tests,
+  2 requirement-matrix tests, and production client/server build.
+- `pnpm test:integration` — passed (18 tests).
+- `pnpm test:network` — passed (1 deterministic adversity test).
+- `pnpm test:e2e` — passed (7 Chromium journeys): solo production smoke, two-browser
+  flight, deterministic combat, compact/desktop layout, regulation win, tie → sudden
+  death → first score, and ring warning → teleport. All new M6 journeys assert clean
+  browser consoles and network requests.
+- `pnpm format:check` — passed. `pnpm knip` is clean with the test-only E2E server entry
+  documented explicitly.
+
+### What Milestone 6 added
+
+- **content:** two normalized, visually distinct CC BY 3.0 aircraft from Poly Pizza and
+  three CC0 Kenney cues, with distributable attribution in
+  `packages/client/public/assets/CREDITS.md` and binary/weight/license validation.
+- **presentation:** brighter arena lighting, aircraft identity colors, fire/hit/bounce/
+  stumble/teleport bursts, predicted tracers, and Web Audio playback that fetches/decodes
+  each clip once while supporting bounded overlapping one-shots.
+- **readability:** semantic live status/meter/result HUD elements, compact 360×640 layout,
+  desktop layout evidence, and an accessible arena label. Initial visual review found the
+  arena too dark; the palette/lighting was raised before accepting the automated lane.
+- **deterministic browser scenarios:** a separately compiled test-only server entry uses
+  the existing server-owned initial-state seam keyed by isolated room prefixes. Production
+  construction does not provide this hook. This closes the inherited win/tie journey gap.
+- **traceability:** `tests/REQUIREMENTS.md` consolidates rule, architecture, and human-only
+  acceptance IDs; a validator prevents automated rows from losing executable test paths.
+  Added exact teleport-occupancy and boundary-ricochet-into-ring regressions.
+- **feel record:** `PLAYTEST.md` records the presentation review, defects/tuning decisions,
+  and the exact human protocol. Defaults remain unchanged because automation cannot supply
+  evidence about humor, comfort, or the four-minute rhythm.
 
 Milestone 5 verified on 2026-07-21 with Node 24.15.0 and pnpm 11.15.1:
 
@@ -146,20 +181,20 @@ W/S throttle · ↑/↓ pitch · ←/→ roll · A/D yaw · Space fire.
 
 ## Known issues / limitations
 
-- **Dedicated win/tie _browser_ journey is TODO** (TESTING §9 journey 5). Win/tie/
-  sudden-death are covered deterministically at the unit and real-WebSocket integration
-  layers; a browser version needs a short-match server (e.g. env-configurable
-  `MATCH_DURATION`/`COUNTDOWN`, or reuse the `createInitialState` seam via a test-only
-  server entry) to finish quickly.
-- **Traceability matrix file is TODO.** Requirement IDs currently live as test-name
-  prefixes (grep-able); TESTING §3 wants a consolidated matrix. Low effort, do during M6.
-- Production glTF assets deferred to Milestone 6; planes are placeholder dart primitives.
+- **Human acceptance is still required.** `PLAYTEST.md` deliberately distinguishes the
+  completed automated/visual inspection from the human-only M6 judgments. A person must
+  play a full default four-minute match before Milestone 6 can be marked complete.
+- **Shipping has external gates.** Milestone 7 still needs a chosen deployment target and
+  credentials plus a two-person real-internet 1v1. These cannot be truthfully replaced by
+  local automation; local deploy, soak, network, performance, and production-smoke work
+  can proceed meanwhile.
 
 ## Next action
 
-Milestone 6 — replace placeholders with licensed glTF planes; complete effects/audio,
-readability/responsive HUD, asset/license validation, dedicated win/tie browser journeys,
-the consolidated requirement matrix, tuning, and structured playtest evidence.
+Checkpoint the complete M6 implementation, then build all locally executable Milestone 7
+release evidence (deployment artifacts, soak/network matrix, performance budgets, and
+production smoke). Record a real human full-match session and real-internet 1v1 before
+marking M6/M7 complete or calling the game shipped.
 
 ---
 

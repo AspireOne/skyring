@@ -20,14 +20,16 @@
     "preview": "pnpm --filter @skyring/client preview",
     "start": "pnpm --filter @skyring/server start",
     "test": "vitest run packages",
+    "test:assets": "vitest run tests/assets",
     "test:coverage": "vitest run packages tests/integration --coverage",
     "test:e2e": "VITE_SERVER_URL=ws://127.0.0.1:4174 pnpm build && playwright test",
     "test:integration": "vitest run tests/integration",
     "test:network": "vitest run tests/network",
+    "test:requirements": "vitest run tests/requirements",
     "test:soak": "vitest run tests/soak --passWithNoTests",
     "test:watch": "vitest packages",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --noEmit --pretty",
-    "verify": "pnpm typecheck && pnpm lint && pnpm knip && pnpm test && pnpm build",
+    "verify": "pnpm typecheck && pnpm lint && pnpm knip && pnpm test && pnpm test:assets && pnpm test:requirements && pnpm build",
     "verify:full": "pnpm verify && pnpm test:integration && pnpm test:network && pnpm test:e2e"
   },
   "lint-staged": {

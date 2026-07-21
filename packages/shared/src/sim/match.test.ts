@@ -137,4 +137,23 @@ describe('stepMatch — playing', () => {
       8,
     );
   });
+
+  it('GAME-9-RICOCHET-INTO-RING: boundary resolution can place a bouncing plane into scoring', () => {
+    const config = testConfig({ MATCH_DURATION: 10 });
+    const state = createInitialMatchState(config);
+    state.phase = MATCH_PHASE.Playing;
+    state.phaseTicksRemaining = config.MATCH_DURATION * config.SIM_HZ;
+    state.ring.center = [0, config.GROUND_Y + config.PLANE_COLLISION_RADIUS, 0];
+    state.ring.teleportTicksRemaining = 10_000;
+    state.planes.a.pos = [0, state.ring.center[1] + config.RING_RADIUS + 8, 0];
+    state.planes.a.vel = [0, -10_000, 0];
+    state.planes.b.pos = [600, 150, 0];
+
+    const { events } = runTicks(state, 1, config);
+    expect(events).toContainEqual(
+      expect.objectContaining({ kind: 'bounce', slot: 'a', surface: 'ground' }),
+    );
+    expect(state.planes.a.inRing).toBe(true);
+    expect(state.planes.a.scoring).toBe(true);
+  });
 });

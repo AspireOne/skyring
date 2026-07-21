@@ -126,6 +126,21 @@ describe('stepRing dwell/warning/teleport (GAME-4)', () => {
       ringConfig.SIM_HZ * ringConfig.RING_DWELL,
     );
   });
+
+  it('GAME-9-RING-TELEPORT-OCCUPANCY: old-zone occupancy stops immediately after teleport', () => {
+    const state = createInitialMatchState(ringConfig);
+    const oldCenter: Vec3 = [...state.ring.center];
+    state.planes.a.pos = oldCenter;
+    state.planes.b.pos = [-500, 150, 0];
+    state.ring.warning = true;
+    state.ring.nextCenter = [300, 300, 300];
+    state.ring.teleportTicksRemaining = 1;
+
+    stepRing(state, ringConfig, createRng(1), []);
+    expect(resolveScoring(state, ringConfig, 1 / ringConfig.SIM_HZ)).toBeNull();
+    expect(state.planes.a.inRing).toBe(false);
+    expect(state.scores.a).toBe(0);
+  });
 });
 
 describe('pickRingCenter (GAME-4, TESTING §6.3)', () => {

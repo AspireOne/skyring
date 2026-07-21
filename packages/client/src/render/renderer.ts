@@ -3,12 +3,12 @@ import {
   BackSide,
   BoxGeometry,
   Color,
-  ConeGeometry,
   DirectionalLight,
   DoubleSide,
   Fog,
   GridHelper,
   Group,
+  HemisphereLight,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
@@ -18,6 +18,12 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three';
+
+import {
+  createFallbackPlane,
+  disposeGroup,
+  loadPlaneModel,
+} from './plane-model.js';
 
 import type { RingStatus } from '../hud/hud-model.js';
 import type { RenderView } from '../net/snapshot-buffer.js';
@@ -51,7 +57,8 @@ const CAM_SMOOTH = 0.12;
 /**
  * Owns the three.js scene and a chase camera behind the local plane. It reads a
  * {@link RenderView} and applies transforms; it holds zero game logic
- * (IMPLEMENTATION §8.3). Plane models are placeholder darts until Milestone 6.
+ * (IMPLEMENTATION §8.3). Aircraft are normalized presentation shells over the
+ * authoritative transforms; their source geometry never affects simulation.
  */
 export class Renderer {
   readonly canvas: HTMLCanvasElement;
@@ -78,6 +85,7 @@ export class Renderer {
   private localSlot: PlayerSlot = 'a';
   private firstFrameDone = false;
   private cameraInitialized = false;
+  private loadedPlaneCount = 0;
 
   constructor(config: GameConfig) {
     this.renderer = new WebGLRenderer({ antialias: true });
@@ -85,6 +93,12 @@ export class Renderer {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.canvas = this.renderer.domElement;
     this.canvas.dataset.testid = 'scene-canvas';
+    this.canvas.dataset.modelsReady = 'loading';
+    this.canvas.setAttribute('role', 'img');
+    this.canvas.setAttribute(
+      'aria-label',
+      'SkyRing aerial arena and two-player match view',
+    );
 
     this.camera = new PerspectiveCamera(
       62,
@@ -93,9 +107,9 @@ export class Renderer {
       config.DOME_RADIUS * 4,
     );
 
-    this.scene.background = new Color(0x0a1626);
+    this.scene.background = new Color(0x173b5f);
     this.scene.fog = new Fog(
-      0x0a1626,
+      0x173b5f,
       config.DOME_RADIUS * 0.8,
       config.DOME_RADIUS * 2.4,
     );
@@ -135,6 +149,9 @@ export class Renderer {
   handleEvents(events: readonly GameEvent[]): void {
     for (const event of events) {
       switch (event.kind) {
+        case 'fire':
+          this.spawnBurst(event.pos, SLOT_COLORS[event.slot], 90);
+          break;
         case 'hit':
           this.spawnBurst(event.pos, 0xffffff, 260);
           break;
@@ -142,7 +159,15 @@ export class Renderer {
           this.spawnBurst(event.pos, SLOT_COLORS[event.slot], 180);
           break;
         case 'ringTeleport':
+          this.spawnBurst(event.center, 0xffe08a, 600);
+          break;
         case 'stumble':
+          this.spawnBurst(
+            fromScenePosition(this.planes[event.slot].position),
+            SLOT_COLORS[event.slot],
+            320,
+          );
+          break;
         case 'phaseChange':
           break;
       }
@@ -187,6 +212,9 @@ export class Renderer {
   }
 
   dispose(): void {
+    for (const plane of Object.values(this.planes)) {
+      disposeGroup(plane);
+    }
     for (const mesh of this.bulletMeshes.values()) {
       this.scene.remove(mesh);
     }
@@ -283,7 +311,7 @@ export class Renderer {
   private buildArena(config: GameConfig): void {
     const ground = new Mesh(
       new BoxGeometry(config.DOME_RADIUS * 4, 1, config.DOME_RADIUS * 4),
-      new MeshStandardMaterial({ color: 0x13233a }),
+      new MeshStandardMaterial({ color: 0x294962 }),
     );
     ground.position.y = config.GROUND_Y - 0.5;
     this.scene.add(ground);
@@ -312,8 +340,9 @@ export class Renderer {
     );
     this.scene.add(dome);
 
-    this.scene.add(new AmbientLight(0x8098b0, 1.1));
-    const sun = new DirectionalLight(0xffffff, 2.2);
+    this.scene.add(new AmbientLight(0xb8d8f0, 1.5));
+    this.scene.add(new HemisphereLight(0xbfe7ff, 0x31465b, 2));
+    const sun = new DirectionalLight(0xffffff, 3);
     sun.position.set(1, 2, 1);
     this.scene.add(sun);
   }
@@ -363,37 +392,33 @@ export class Renderer {
   }
 
   private addPlane(slot: PlayerSlot): Group {
-    const color = SLOT_COLORS[slot];
-    const material = new MeshStandardMaterial({
-      color,
-      emissive: color,
-      emissiveIntensity: 0.25,
-      metalness: 0.2,
-      roughness: 0.5,
-    });
-
     const group = new Group();
-    const fuselage = new Mesh(new ConeGeometry(3, 18, 12), material);
-    fuselage.rotation.x = -Math.PI / 2; // point the cone tip along -Z (nose)
-    group.add(fuselage);
-
-    const wing = new Mesh(new BoxGeometry(26, 1, 6), material);
-    wing.position.z = 1;
-    group.add(wing);
-
-    const tail = new Mesh(new BoxGeometry(8, 1, 4), material);
-    tail.position.z = 7;
-    group.add(tail);
-
-    const fin = new Mesh(new BoxGeometry(1, 5, 5), material);
-    fin.position.z = 7;
-    fin.position.y = 2;
-    group.add(fin);
-
+    const placeholder = createFallbackPlane(SLOT_COLORS[slot]);
+    group.add(placeholder);
     this.scene.add(group);
+
+    loadPlaneModel(
+      slot,
+      (model) => {
+        group.add(model);
+        group.remove(placeholder);
+        disposeGroup(placeholder);
+        this.loadedPlaneCount += 1;
+        if (this.loadedPlaneCount === 2) {
+          this.canvas.dataset.modelsReady = 'true';
+        }
+      },
+      (path, error) => {
+        this.canvas.dataset.modelsReady = 'error';
+        console.error(`Failed to load ${path}`, error);
+      },
+    );
     return group;
   }
 }
 
 const _forward = new Vector3();
 const _desired = new Vector3();
+function fromScenePosition(value: Vector3): Vec3 {
+  return [value.x, value.y, value.z];
+}

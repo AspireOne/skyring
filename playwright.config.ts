@@ -10,6 +10,9 @@ const serverUrl = 'http://127.0.0.1:4174';
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
+  // Each test owns one or two WebGL contexts; cap concurrency to avoid starving
+  // browser animation/network tasks on modest CI runners.
+  workers: 2,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
@@ -33,7 +36,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: 'pnpm --filter @skyring/server start',
+      command: 'pnpm --filter @skyring/server start:e2e',
       url: `${serverUrl}/health`,
       env: {
         ...process.env,

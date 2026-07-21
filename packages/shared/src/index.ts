@@ -42,6 +42,7 @@ export type {
   ClientMessage,
   ClientMessageTag,
   EventMessage,
+  FireEvent,
   GameEvent,
   GameEventKind,
   HelloMessage,

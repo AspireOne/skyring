@@ -28,6 +28,7 @@ function makeMatch(): {
     1,
     a.connection,
     b.connection,
+    {},
     {
       now: () => 0,
       onEnded,

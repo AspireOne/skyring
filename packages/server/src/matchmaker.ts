@@ -9,6 +9,7 @@ import {
 import { Match } from './match.js';
 
 import type { Connection } from './connection.js';
+import type { MatchContext } from './match.js';
 import type { Now } from './scheduler.js';
 
 export interface MatchmakerDeps {
@@ -19,7 +20,10 @@ export interface MatchmakerDeps {
    * Test-only prescribed initial state (TESTING §9, D011). Absent in
    * production, where matches always start from `createInitialMatchState`.
    */
-  readonly createInitialState?: (config: GameConfig) => MatchState;
+  readonly createInitialState?: (
+    config: GameConfig,
+    context: MatchContext,
+  ) => MatchState;
 }
 
 /**
@@ -52,7 +56,7 @@ export class Matchmaker {
     }
     const opponent = this.quickWaiting;
     this.quickWaiting = undefined;
-    this.pair(opponent, connection);
+    this.pair(opponent, connection, {});
   }
 
   enqueueRoom(connection: Connection, room: string): void {
@@ -69,7 +73,7 @@ export class Matchmaker {
       return;
     }
     this.roomWaiting.delete(room);
-    this.pair(waiting, connection);
+    this.pair(waiting, connection, { room });
   }
 
   routeInput(connection: Connection, input: InputCommand): void {
@@ -128,13 +132,14 @@ export class Matchmaker {
     }
   }
 
-  private pair(a: Connection, b: Connection): void {
+  private pair(a: Connection, b: Connection, context: MatchContext): void {
     const match = new Match(
       randomUUID(),
       this.config,
       this.deps.nextSeed(),
       a,
       b,
+      context,
       {
         now: this.deps.now,
         onEnded: (ended) => this.removeMatch(ended),

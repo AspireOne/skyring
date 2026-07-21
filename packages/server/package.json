@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/index.ts",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "start:e2e": "node dist/e2e.js"
   },
   "dependencies": {
     "@skyring/shared": "workspace:*",

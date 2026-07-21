@@ -49,6 +49,16 @@ test('two players exchange deterministic bonks with ammo, tracers, and stumble f
 
   await expect
     .poll(
+      async () => pageA.evaluate(() => window.__skyringState?.localAmmo ?? 20),
+      { timeout: 3000 },
+    )
+    .toBeLessThan(20);
+  const spentAmmo = await pageA.evaluate(
+    () => window.__skyringState?.localAmmo ?? Number.POSITIVE_INFINITY,
+  );
+
+  await expect
+    .poll(
       async () =>
         pageA.evaluate(() => (window.__skyringState?.eventCounts.hit ?? 0) > 0),
       { timeout: 8000 },
@@ -64,10 +74,6 @@ test('two players exchange deterministic bonks with ammo, tracers, and stumble f
     )
     .toBe(true);
 
-  const spentAmmo = await pageA.evaluate(
-    () => window.__skyringState?.localAmmo ?? Number.POSITIVE_INFINITY,
-  );
-  expect(spentAmmo).toBeLessThan(20);
   await Promise.all([pageA.keyboard.up('Space'), pageB.keyboard.up('Space')]);
 
   await expect

@@ -10,12 +10,14 @@ import { Hud } from '../hud/hud.js';
 import { CONTROL_HINTS, KeyboardInput } from '../input/keyboard.js';
 import { NetClient } from '../net/net-client.js';
 import { Renderer } from '../render/renderer.js';
+import { SoundEngine } from '../render/sound.js';
 
 /**
  * Boots and wires the client: a continuous render loop over the interpolated
  * world, and — once matched — a fixed-rate input loop that samples the keyboard
  * and sends intent (IMPLEMENTATION §8). Owns no game logic; the server is
- * authoritative and this only predicts nothing yet (prediction lands in M5).
+ * authoritative; the net layer predicts only the local plane and reconciles it
+ * from recipient-specific snapshots.
  */
 export class GameController {
   private readonly renderer: Renderer;
@@ -23,8 +25,10 @@ export class GameController {
   private readonly keyboard = new KeyboardInput();
   private readonly status: HTMLDivElement;
   private readonly hud: Hud;
+  private readonly sound = new SoundEngine();
   private config: GameConfig = DEFAULT_GAME_CONFIG;
   private readonly eventCounts: Record<GameEventKind, number> = {
+    fire: 0,
     hit: 0,
     bounce: 0,
     ringTeleport: 0,
@@ -58,6 +62,7 @@ export class GameController {
     this.net.onUpdate = () => this.onNetUpdate();
     this.net.onEvent = (message) => {
       this.renderer.handleEvents(message.events);
+      this.sound.handleEvents(message.events);
       for (const event of message.events) {
         this.eventCounts[event.kind] += 1;
       }
@@ -83,6 +88,7 @@ export class GameController {
     window.removeEventListener('resize', this.onResize);
     this.net.dispose();
     this.renderer.dispose();
+    this.sound.dispose();
     this.hud.dispose();
   }
 

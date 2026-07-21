@@ -176,6 +176,10 @@ canvas {
   background: rgba(4, 9, 18, 0.72);
 }
 
+.hud__result[hidden] {
+  display: none;
+}
+
 .hud__result[data-outcome='win'] {
   color: #59f5a6;
 }
@@ -195,5 +199,53 @@ canvas {
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+@media (max-width: 500px), (max-height: 560px) {
+  .hud__scoreboard {
+    top: 10px;
+    gap: 12px;
+    padding: 8px 16px;
+  }
+
+  .hud__score {
+    min-width: 38px;
+    font-size: 32px;
+  }
+
+  .hud__timer {
+    min-width: 58px;
+    font-size: 18px;
+  }
+
+  .hud__ring {
+    top: 70px;
+  }
+
+  .hud__warning {
+    top: 104px;
+  }
+
+  .hud__ammo {
+    bottom: 50px;
+    left: 12px;
+    width: calc(100vw - 24px);
+  }
+
+  .hud__result {
+    padding: 20px;
+    font-size: clamp(42px, 14vw, 64px);
+    text-align: center;
+  }
+
+  .net-status {
+    bottom: 8px;
+    width: max-content;
+    max-width: calc(100vw - 24px);
+    overflow: hidden;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
