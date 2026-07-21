@@ -1,0 +1,4 @@
+# Avoid newly published packages by default; latest tooling is opted in explicitly.
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - prettier@3.9.6
